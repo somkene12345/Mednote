@@ -104,45 +104,47 @@ export default function SearchPatientNotes() {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <FlatList
-          data={patients}
-          keyExtractor={(item) => item.key}
-          renderItem={({ item }) => (
-            <View style={styles.patientContainer}>
-              <TouchableOpacity
-                onPress={() => togglePatientDetails(item.key)}
-              >
-                <Text style={styles.patientName}>{item.key}</Text>
-              </TouchableOpacity>
-              {expandedPatient === item.key && (
-                <View>
-                  {Object.keys(item)
-                    .filter((key) => key !== "key")
-                    .map((timestamp) => (
-                      <View key={timestamp} style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>{timestamp}</Text>
-                        <Text style={styles.note}>
-                          Test start time: {item[timestamp].TestStartTime
-                          }
-                        </Text>
-                        <Text style={styles.note}>
-                          Test end time: {item[timestamp].TestEndTime
-                          }
-                        </Text>
-                        <Text style={styles.note}>
-                          Activity: {item[timestamp].Activity}
-                        </Text>
-                        <Text style={styles.note}>
-                          Symptom: {item[timestamp].Symptom}
-                        </Text>
+<FlatList
+  data={patients}
+  keyExtractor={(item) => item.key}
+  renderItem={({ item }) => (
+    <View style={styles.patientContainer}>
+      <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
+        <Text style={styles.patientName}>{item.key}</Text>
+      </TouchableOpacity>
+      {expandedPatient === item.key && (
+        <View>
+          {Object.keys(item)
+            .filter((key) => key !== "key")
+            .map((timestamp) => (
+              <View key={timestamp} style={styles.noteContainer}>
+                <Text style={styles.noteDate}>{timestamp}</Text>
+                <Text style={styles.note}>
+                  Test start time: {item[timestamp].TestStartTime}
+                </Text>
+                <Text style={styles.note}>
+                  Test end time: {item[timestamp].TestEndTime}
+                </Text>
+                <Text style={styles.note}>
+                  Activity: {item[timestamp].Activity}
+                </Text>
+                <Text style={styles.note}>
+                  Symptom: {item[timestamp].Symptom}
+                </Text>
+                {item[timestamp].Comment &&
+                  item[timestamp].Comment.trim() !== "" && (
+                    <Text style={styles.note}>
+                      Comment: {item[timestamp].Comment}
+                    </Text>
+                  )}
+              </View>
+            ))}
+        </View>
+      )}
+    </View>
+  )}
+/>
 
-                      </View>
-                    ))}
-                </View>
-              )}
-            </View>
-          )}
-        />
       )}
     </View>
   );

@@ -4,13 +4,13 @@ import { ref, set } from "firebase/database";
 import { database } from "../firebaseConfig";
 
 export default function Index() {
-  const [rows, setRows] = useState([{ action: "", symptom: "" }]);
+  const [rows, setRows] = useState([{ action: "", symptom: "", comment: "" }]);
   const [name, setName] = useState("");
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
+  const [showComments, setShowComments] = useState(false);
 
-  // Save data to Firebase
-  const saveData = (data: any, index: number) => {
+  const saveData = () => {
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
       Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
       return;
@@ -19,14 +19,34 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
+    const dataToSave = rows.map((row) => {
+      if (row.action.trim() && row.symptom.trim()) {
+        const startDate = new Date(testStartTime);
+        const endDate = new Date(startDate);
+        endDate.setHours(startDate.getHours() + 25);
+
+        return {
+          Activity: row.action,
+          Symptom: row.symptom,
+          Comment: row.comment,
+          TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
+          TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+        };
+      }
+      return null;
+    }).filter(Boolean); // Remove empty rows
+
+    if (dataToSave.length === 0) {
+      Alert.alert("Error", "Please complete the rows before submitting.");
+      return;
+    }
+
     const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
 
-    set(newEntryRef, data)
+    set(newEntryRef, dataToSave)
       .then(() => {
         Alert.alert("Success", "Data saved successfully!");
-        const updatedRows = [...rows];
-        updatedRows[index] = { action: "", symptom: "" };
-        setRows(updatedRows);
+        setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
       })
       .catch((error) => {
         Alert.alert("Error", "Failed to save data.");
@@ -34,27 +54,8 @@ export default function Index() {
       });
   };
 
-  // Handle blur to save data with calculated TestEndTime
-  const handleBlur = (index: number) => {
-    const currentRow = rows[index];
-    if (currentRow.action.trim() && currentRow.symptom.trim()) {
-      const startDate = new Date(testStartTime);
-      const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 25);
-
-      const data = {
-        Activity: currentRow.action,
-        Symptom: currentRow.symptom,
-        TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
-        TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " ")
-      };
-
-      saveData(data, index);
-    }
-  };
-
-  const addRow = () => {
-    setRows([...rows, { action: "", symptom: "" }]);
+  const toggleComments = () => {
+    setShowComments((prev) => !prev);
   };
 
   return (
@@ -102,44 +103,62 @@ export default function Index() {
 
           {rows.map((row, index) => (
             <View key={index} style={styles.tableRow}>
-              <TextInput
-                placeholder="What are you doing?"
-                style={styles.input}
-                value={row.action}
-                multiline
-                scrollEnabled
-                onChangeText={(text) => {
-                  const updatedRows = [...rows];
-                  updatedRows[index].action = text;
-                  setRows(updatedRows);
-                }}
-                onBlur={() => handleBlur(index)}
-              />
-              <TextInput
-                placeholder="What are you feeling?"
-                style={styles.input}
-                value={row.symptom}
-                multiline
-                scrollEnabled
-                onChangeText={(text) => {
-                  const updatedRows = [...rows];
-                  updatedRows[index].symptom = text;
-                  setRows(updatedRows);
-                }}
-                onBlur={() => handleBlur(index)}
-              />
+              <View style={styles.rowTop}>
+                <TextInput
+                  placeholder="What are you doing?"
+                  style={styles.input}
+                  value={row.action}
+                  multiline
+                  scrollEnabled
+                  onChangeText={(text) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].action = text;
+                    setRows(updatedRows);
+                  }}
+                />
+                <TextInput
+                  placeholder="What are you feeling?"
+                  style={styles.input}
+                  value={row.symptom}
+                  multiline
+                  scrollEnabled
+                  onChangeText={(text) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].symptom = text;
+                    setRows(updatedRows);
+                  }}
+                />
+              </View>
+              {showComments && (
+                <TextInput
+                  placeholder="Add a comment"
+                  style={styles.commentInput}
+                  value={row.comment}
+                  multiline
+                  scrollEnabled
+                  onChangeText={(text) => {
+                    const updatedRows = [...rows];
+                    updatedRows[index].comment = text;
+                    setRows(updatedRows);
+                  }}
+                />
+              )}
             </View>
           ))}
         </View>
-        <TouchableOpacity style={styles.fakeSubButton}>
+
+        {/* Toggle Comments Button */}
+        <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
+          <Text style={styles.toggleButtonText}>
+            {showComments ? "Hide Comments" : "Add Comments"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Add Row Button */}
-      <TouchableOpacity style={styles.addButton} onPress={addRow}>
-        <Text style={styles.addButtonText}>Add Entry</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -154,7 +173,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     marginBottom: 20,
   },
-
   inputit: {
     fontFamily: "Arial, sans-serif",
     outline: "none",
@@ -220,9 +238,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tableRow: {
+    marginBottom: 10,
+  },
+  rowTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 10,
+    paddingHorizontal: 10,
   },
   input: {
     width: "48%",
@@ -231,6 +252,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     backgroundColor: "#fff",
+  },
+  commentInput: {
+    marginHorizontal: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: "#fff",
+  },
+  toggleButton: {
+    backgroundColor: "#FFA500",
+    padding: 10,
+    margin: 15,
+    borderRadius: 6,
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  toggleButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   fakeSubButton: {
     backgroundColor: "#00FF7A",
@@ -241,13 +284,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
   },
-  addButton: {
-    backgroundColor: "#007AFF",
-    padding: 15,
-    margin: 20,
-    borderRadius: 6,
-    alignItems: "center",
-  },
+
   addButtonText: {
     color: "#fff",
     fontWeight: "bold",
