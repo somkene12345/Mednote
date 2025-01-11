@@ -10,6 +10,10 @@
     "destination": "/favicon.ico"
   },
   {
+    "source": "/favicon.png",
+    "destination": "/favicon.png"
+  },
+  {
     "source": "/:path*",
     "destination": "/"
   }
