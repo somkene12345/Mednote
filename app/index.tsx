@@ -71,9 +71,9 @@ export default function Index() {
           />
         </View>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hospital No:</Text>
+          <Text style={styles.label}>Hospital Id:</Text>
           <TextInput
-            placeholder="Enter Your Hospital No"
+            placeholder="Enter Your Hospital Id"
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
