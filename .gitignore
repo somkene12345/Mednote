@@ -2,10 +2,11 @@
 
 # dependencies
 node_modules/
+!dist/node_modules/
+
 
 # Expo
 .expo/
-dist/
 web-build/
 expo-env.d.ts
 
@@ -31,8 +32,10 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
+.gitignore
 
 app-example
