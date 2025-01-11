@@ -6,8 +6,16 @@
     "framework": null,
     "rewrites": [
       {
+        "source": "/favicon.ico",
+        "destination": "/favicon.ico"
+      },
+      {
+        "source": "/favicon.png",
+        "destination": "/favicon.png"
+      },
+      {
         "source": "/:path*",
-        "destination": "/index.html"
+        "destination": "/"
       }
     ],
     "headers": [
