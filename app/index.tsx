@@ -19,24 +19,22 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    const dataToSave = rows
-      .map((row) => {
-        if (row.action.trim() && row.symptom.trim()) {
-          const startDate = new Date(testStartTime);
-          const endDate = new Date(startDate);
-          endDate.setHours(startDate.getHours() + 25);
+    const dataToSave = rows.map((row) => {
+      if (row.action.trim() && row.symptom.trim()) {
+        const startDate = new Date(testStartTime);
+        const endDate = new Date(startDate);
+        endDate.setHours(startDate.getHours() + 25);
 
-          return {
-            Activity: row.action,
-            Symptom: row.symptom,
-            Comment: row.comment,
-            TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
-            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
-          };
-        }
-        return null;
-      })
-      .filter(Boolean); // Remove empty rows
+        return {
+          Activity: row.action,
+          Symptom: row.symptom,
+          Comment: row.comment,
+          TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
+          TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+        };
+      }
+      return null;
+    }).filter(Boolean); // Remove empty rows
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
@@ -164,6 +162,7 @@ export default function Index() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   teStTi: {

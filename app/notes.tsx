@@ -116,34 +116,37 @@ export default function SearchPatientNotes() {
         <View>
           {Object.keys(item)
             .filter((key) => key !== "key")
-            .map((timestamp) => (
-              <View key={timestamp} style={styles.noteContainer}>
-                <Text style={styles.noteDate}>{timestamp}</Text>
-                <Text style={styles.note}>
-                  Test start time: {item[timestamp].TestStartTime}
-                </Text>
-                <Text style={styles.note}>
-                  Test end time: {item[timestamp].TestEndTime}
-                </Text>
-                <Text style={styles.note}>
-                  Activity: {item[timestamp].Activity}
-                </Text>
-                <Text style={styles.note}>
-                  Symptom: {item[timestamp].Symptom}
-                </Text>
-                {item[timestamp].Comment &&
-                  item[timestamp].Comment.trim() !== "" && (
+            .map((timestamp) => {
+              const details = item[timestamp]?.["0"]; // Accessing data under "0"
+              return details ? (
+                <View key={timestamp} style={styles.noteContainer}>
+                  <Text style={styles.noteDate}>{timestamp}</Text>
+                  <Text style={styles.note}>
+                    Test start time: {details.TestStartTime}
+                  </Text>
+                  <Text style={styles.note}>
+                    Test end time: {details.TestEndTime}
+                  </Text>
+                  <Text style={styles.note}>
+                    Activity: {details.Activity}
+                  </Text>
+                  <Text style={styles.note}>
+                    Symptom: {details.Symptom}
+                  </Text>
+                  {details.Comment && details.Comment.trim() !== "" && (
                     <Text style={styles.note}>
-                      Comment: {item[timestamp].Comment}
+                      Comments: {details.Comment}
                     </Text>
                   )}
-              </View>
-            ))}
+                </View>
+              ) : null;
+            })}
         </View>
       )}
     </View>
   )}
 />
+
 
       )}
     </View>
