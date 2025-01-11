@@ -39,3 +39,5 @@ yarn-error.*
 .gitignore
 
 app-example
+
+.vercel
