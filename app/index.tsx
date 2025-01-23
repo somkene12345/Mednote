@@ -1,5 +1,13 @@
-import React, { useState } from "react";
-import { StyleSheet, TextInput, View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+} from "react-native";
 import { ref, set } from "firebase/database";
 import { database } from "../firebaseConfig";
 
@@ -10,6 +18,24 @@ export default function Index() {
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
 
+  // Load data from local storage on initial render
+  useEffect(() => {
+    const savedName = localStorage.getItem("name");
+    const savedHospitalNo = localStorage.getItem("hospitalNo");
+    const savedTestStartTime = localStorage.getItem("testStartTime");
+
+    if (savedName) setName(savedName);
+    if (savedHospitalNo) setHospitalNo(savedHospitalNo);
+    if (savedTestStartTime) setTestStartTime(savedTestStartTime);
+  }, []);
+
+  // Autosave data to local storage
+  useEffect(() => {
+    localStorage.setItem("name", name);
+    localStorage.setItem("hospitalNo", hospitalNo);
+    localStorage.setItem("testStartTime", testStartTime);
+  }, [name, hospitalNo, testStartTime]);
+
   const saveData = () => {
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
       Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
@@ -19,22 +45,24 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    const dataToSave = rows.map((row) => {
-      if (row.action.trim() && row.symptom.trim()) {
-        const startDate = new Date(testStartTime);
-        const endDate = new Date(startDate);
-        endDate.setHours(startDate.getHours() + 25);
+    const dataToSave = rows
+      .map((row) => {
+        if (row.action.trim() && row.symptom.trim()) {
+          const startDate = new Date(testStartTime);
+          const endDate = new Date(startDate);
+          endDate.setHours(startDate.getHours() + 25);
 
-        return {
-          Activity: row.action,
-          Symptom: row.symptom,
-          Comment: row.comment,
-          TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
-          TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
-        };
-      }
-      return null;
-    }).filter(Boolean); // Remove empty rows
+          return {
+            Activity: row.action,
+            Symptom: row.symptom,
+            Comment: row.comment,
+            TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
+            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+          };
+        }
+        return null;
+      })
+      .filter(Boolean); // Remove empty rows
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
