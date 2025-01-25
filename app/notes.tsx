@@ -154,23 +154,39 @@ export default function SearchPatientNotes() {
 <SectionList
   sections={item.sections}
   keyExtractor={(entry, index) => entry.timestamp + index}
-  renderSectionHeader={({ section: { title } }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>
-        Test Start Time: {title}
-      </Text>
+  renderSectionHeader={({ section: { title } }) => {
+    // Convert TestStartTime (with space instead of 'T') to Date object
+    const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
 
-      {item.testDetails.TestEndTime ? (
-          <Text style={styles.sectionHeaderText}>
-          Test has ended
-        </Text>
-      ) : (
+    // Add 25 hours to the TestStartTime and round to the nearest minute
+    const endTime = new Date(startTime.getTime() + 25 * 60 * 60 * 1000); // 25 hours in milliseconds
+
+    // Round endTime to nearest minute by resetting seconds and milliseconds
+    endTime.setSeconds(0);
+    endTime.setMilliseconds(0);
+
+    // Determine if the test has ended (current time is after TestEndTime)
+    const hasEnded = new Date() > endTime;
+
+    // Format the date to only include up to the minute (YYYY-MM-DD HH:mm)
+    const formatDate = (date: Date) => {
+      return date.toISOString().slice(0, 16).replace("T", " "); // "2025-01-25 14:00"
+    };
+
+    return (
+      <View style={styles.sectionHeader}>
         <Text style={styles.sectionHeaderText}>
-          Test not ended yet
+          Test Start Time: {formatDate(startTime)} {/* Display Test Start Time */}
         </Text>
-      )}
-    </View>
-  )}
+        <Text style={styles.sectionHeaderText}>
+          Test End Time: {formatDate(endTime)} {/* Display the calculated Test End Time */}
+        </Text>
+        <Text style={styles.sectionHeaderText}>
+          {hasEnded ? "Test has ended" : "Test is ongoing"} {/* Display test status */}
+        </Text>
+      </View>
+    );
+  }}
   renderItem={({ item }) => (
     <View style={styles.noteContainer}>
       <Text style={styles.noteDate}>{item.timestamp}</Text>
@@ -182,6 +198,7 @@ export default function SearchPatientNotes() {
     </View>
   )}
 />
+
 
                 </View>
               )}
