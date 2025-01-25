@@ -124,6 +124,9 @@ export default function Index() {
           onChange={(e) => setTestStartTime(e.target.value)}
         />
       </Text>
+      <Text style={styles.tet}>
+        The test ends by {endDate.toISOString().slice(0, 16).replace("T", " ")}
+</Text>
 
       {/* Table */}
       <ScrollView style={styles.scrollContainer}>
@@ -210,6 +213,10 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
+  tet: {
+  color: "#fff"
+  },
+                                 
   teStTi: {
     alignSelf: "center",
     width: "auto",
