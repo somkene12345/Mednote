@@ -247,13 +247,6 @@ const styles = StyleSheet.create({
     padding: 10,
     boxSizing: "border-box",
   },
-  testEndTime: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 10,
-  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -281,33 +274,37 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
   },
+  scrollContainer: {
+    flex: 1,
+  },
   tableContainer: {
-    margin: 10,
-    backgroundColor: "#fff",
-    borderRadius: 6,
+    marginLeft: 20,
+    marginRight: 20,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
   },
   tableHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#f1f1f1",
+    backgroundColor: "#007AFF",
     padding: 10,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
   },
   headerText: {
-    fontSize: 16,
+    color: "#fff",
     fontWeight: "bold",
-    color: "#333",
+    fontSize: 16,
+    textAlign: "center",
+    flex: 1,
   },
   tableRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 10,
+    marginBottom: 10,
   },
   rowTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "100%",
+    paddingHorizontal: 10,
   },
   input: {
     width: "48%",
@@ -366,5 +363,12 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     color: "#007AFF",
+  },
+  testEndTime: {
+    color: "red",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
