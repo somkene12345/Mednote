@@ -159,9 +159,13 @@ export default function SearchPatientNotes() {
       <Text style={styles.sectionHeaderText}>
         Test Start Time: {title}
       </Text>
-      {item.testDetails.TestEndTime && (
+      {item.testDetails.TestEndTime ? (
         <Text style={styles.sectionHeaderText}>
           Test End Time: {item.testDetails.TestEndTime}
+        </Text>
+      ) : (
+        <Text style={styles.sectionHeaderText}>
+          Test not ended yet
         </Text>
       )}
     </View>
