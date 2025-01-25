@@ -18,6 +18,7 @@ export default function Index() {
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [testEnded, setTestEnded] = useState(false);
 
   // Load data from local storage on initial render
   useEffect(() => {
@@ -44,6 +45,21 @@ export default function Index() {
     endDate.setHours(startDate.getHours() + 24);
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
+
+  // Check if test has ended
+  const checkTestEnd = () => {
+    const endTime = calculateTestEndTime(testStartTime);
+    const currentTime = new Date().toISOString().slice(0, 16);
+    if (currentTime >= endTime) {
+      setTestEnded(true);
+    }
+  };
+
+  useEffect(() => {
+    if (testStartTime) {
+      checkTestEnd();
+    }
+  }, [testStartTime]);
 
   const saveData = () => {
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
@@ -98,6 +114,14 @@ export default function Index() {
 
   const toggleMenu = () => setMenuVisible(!menuVisible);
 
+  const addRow = () => {
+    if (testEnded) {
+      Alert.alert("Test Ended", "The test has ended. You cannot add more entries.");
+    } else {
+      setRows([...rows, { action: "", symptom: "", comment: "" }]);
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       {/* Header Inputs */}
@@ -135,8 +159,8 @@ export default function Index() {
 
       {/* Test End Time */}
       {testStartTime && (
-        <Text style={styles.testEndTime}>
-          Test ends by: {calculateTestEndTime(testStartTime)}
+        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
+          {testEnded ? "Test has ended. You cannot add another entry." : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
 
@@ -162,6 +186,7 @@ export default function Index() {
                     updatedRows[index].action = text;
                     setRows(updatedRows);
                   }}
+                  editable={!testEnded} // Disable input if test has ended
                 />
                 <TextInput
                   placeholder="What are you feeling?"
@@ -174,6 +199,7 @@ export default function Index() {
                     updatedRows[index].symptom = text;
                     setRows(updatedRows);
                   }}
+                  editable={!testEnded} // Disable input if test has ended
                 />
               </View>
               {showComments && (
@@ -188,6 +214,7 @@ export default function Index() {
                     updatedRows[index].comment = text;
                     setRows(updatedRows);
                   }}
+                  editable={!testEnded} // Disable input if test has ended
                 />
               )}
             </View>
@@ -195,7 +222,7 @@ export default function Index() {
         </View>
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
+        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData} disabled={testEnded}>
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
 
@@ -220,6 +247,13 @@ export default function Index() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Button to add a new row */}
+      {!testEnded && (
+        <TouchableOpacity style={styles.fakeSubButton} onPress={addRow}>
+          <Text style={styles.addButtonText}>Add New Row</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -365,6 +399,13 @@ const styles = StyleSheet.create({
     color: "#007AFF",
   },
   testEndTime: {
+    color: "red",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  testEnded: {
     color: "red",
     fontSize: 16,
     fontWeight: "bold",
