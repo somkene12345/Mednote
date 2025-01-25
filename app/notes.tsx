@@ -159,7 +159,7 @@ export default function SearchPatientNotes() {
     const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
 
     // Add 25 hours to the TestStartTime and round to the nearest minute
-    const endTime = new Date(startTime.getTime() + 25 * 60 * 60 * 1000); // 25 hours in milliseconds
+    const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
 
     // Round endTime to nearest minute by resetting seconds and milliseconds
     endTime.setSeconds(0);
