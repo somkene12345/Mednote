@@ -154,7 +154,7 @@ export default function SearchPatientNotes() {
                   {/* Use SectionList to render grouped entries */}
                   <SectionList
                     sections={item.sections}
-                    keyExtractor={(item, index) => item.timestamp + index}
+                    keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => (
                       <View style={styles.sectionHeader}>
                         <Text style={styles.sectionHeaderText}>Test Start Time: {title}</Text>
