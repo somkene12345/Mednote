@@ -175,13 +175,6 @@ export default function Index() {
           ))}
         </View>
 
-        {/* Toggle Comments Button */}
-        <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
-          <Text style={styles.toggleButtonText}>
-            {showComments ? "Hide Comments" : "Add Comments"}
-          </Text>
-        </TouchableOpacity>
-
         {/* Submit Button */}
         <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
           <Text style={styles.addButtonText}>Submit</Text>
@@ -190,6 +183,13 @@ export default function Index() {
     </View>
   );
 }
+
+        {/* Toggle Comments Button */}
+        <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
+          <Text style={styles.toggleButtonText}>
+            {showComments ? "Hide Comments" : "Add Comments"}
+          </Text>
+        </TouchableOpacity>
 
 
 const styles = StyleSheet.create({
