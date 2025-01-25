@@ -5,6 +5,7 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  SectionList,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -54,15 +55,32 @@ export default function SearchPatientNotes() {
         const patientData = data[patientKey];
         const testDetails = patientData.TestDetails || {}; // Extracting test details
 
+        // Group entries by TestStartTime
+        const groupedEntries = Object.keys(patientData)
+          .filter((key) => key !== "TestDetails" && key !== "key")
+          .map((timestamp) => ({
+            timestamp,
+            ...patientData[timestamp]["0"], // Accessing data under "0"
+          }))
+          .reduce((groups, entry) => {
+            const startTime = entry.TestStartTime;
+            if (!groups[startTime]) {
+              groups[startTime] = [];
+            }
+            groups[startTime].push(entry);
+            return groups;
+          }, {});
+
+        // Convert grouped entries into a format for SectionList
+        const sections = Object.keys(groupedEntries).map((startTime) => ({
+          title: startTime,
+          data: groupedEntries[startTime],
+        }));
+
         return {
           key: patientKey,
           testDetails,
-          entries: Object.keys(patientData)
-            .filter((key) => key !== "TestDetails" && key !== "key")
-            .map((timestamp) => ({
-              timestamp,
-              ...patientData[timestamp]["0"], // Accessing data under "0"
-            })),
+          sections, // Grouped entries by TestStartTime
         };
       });
 
@@ -133,17 +151,26 @@ export default function SearchPatientNotes() {
                     </View>
                   )}
 
-                  {/* Display patient entries */}
-                  {item.entries.map((entry) => (
-                    <View key={entry.timestamp} style={styles.noteContainer}>
-                      <Text style={styles.noteDate}>{entry.timestamp}</Text>
-                      <Text style={styles.note}>Activity: {entry.Activity}</Text>
-                      <Text style={styles.note}>Symptom: {entry.Symptom}</Text>
-                      {entry.Comment && entry.Comment.trim() !== "" && (
-                        <Text style={styles.note}>Comments: {entry.Comment}</Text>
-                      )}
-                    </View>
-                  ))}
+                  {/* Use SectionList to render grouped entries */}
+                  <SectionList
+                    sections={item.sections}
+                    keyExtractor={(item, index) => item.timestamp + index}
+                    renderSectionHeader={({ section: { title } }) => (
+                      <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionHeaderText}>Test Start Time: {title}</Text>
+                      </View>
+                    )}
+                    renderItem={({ item }) => (
+                      <View style={styles.noteContainer}>
+                        <Text style={styles.noteDate}>{item.timestamp}</Text>
+                        <Text style={styles.note}>Activity: {item.Activity}</Text>
+                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                        {item.Comment && item.Comment.trim() !== "" && (
+                          <Text style={styles.note}>Comments: {item.Comment}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
                 </View>
               )}
             </View>
@@ -166,6 +193,17 @@ const styles = StyleSheet.create({
   testDetail: {
     fontSize: 16,
     marginBottom: 5,
+  },
+  sectionHeader: {
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  sectionHeaderText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
   authContainer: {
     flex: 1,
