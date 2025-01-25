@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { ref, set } from "firebase/database";
-import { database } from "../firebaseConfig";
+import { database } from "../firebaseConfig"; // Make sure firebaseConfig.js is correctly set up
 
 export default function Index() {
   const [rows, setRows] = useState([{ action: "", symptom: "", comment: "" }]);
@@ -99,6 +99,7 @@ export default function Index() {
       return;
     }
 
+    // Define reference path for data in Firebase
     const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
 
     set(newEntryRef, dataToSave)
