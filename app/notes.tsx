@@ -50,10 +50,21 @@ export default function SearchPatientNotes() {
         patientKey.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      const resultPatients = results.map((patientKey) => ({
-        key: patientKey,
-        ...data[patientKey],
-      }));
+      const resultPatients = results.map((patientKey) => {
+        const patientData = data[patientKey];
+        const testDetails = patientData.TestDetails || {}; // Extracting test details
+
+        return {
+          key: patientKey,
+          testDetails,
+          entries: Object.keys(patientData)
+            .filter((key) => key !== "TestDetails" && key !== "key")
+            .map((timestamp) => ({
+              timestamp,
+              ...patientData[timestamp]["0"], // Accessing data under "0"
+            })),
+        };
+      });
 
       setPatients(resultPatients);
     } catch (error) {
@@ -104,50 +115,40 @@ export default function SearchPatientNotes() {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-<FlatList
-  data={patients}
-  keyExtractor={(item) => item.key}
-  renderItem={({ item }) => (
-    <View style={styles.patientContainer}>
-      <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-        <Text style={styles.patientName}>{item.key}</Text>
-      </TouchableOpacity>
-      {expandedPatient === item.key && (
-        <View>
-          {Object.keys(item)
-            .filter((key) => key !== "key")
-            .map((timestamp) => {
-              const details = item[timestamp]?.["0"]; // Accessing data under "0"
-              return details ? (
-                <View key={timestamp} style={styles.noteContainer}>
-                  <Text style={styles.noteDate}>{timestamp}</Text>
-                  <Text style={styles.note}>
-                    Test start time: {details.TestStartTime}
-                  </Text>
-                  <Text style={styles.note}>
-                    Test end time: {details.TestEndTime}
-                  </Text>
-                  <Text style={styles.note}>
-                    Activity: {details.Activity}
-                  </Text>
-                  <Text style={styles.note}>
-                    Symptom: {details.Symptom}
-                  </Text>
-                  {details.Comment && details.Comment.trim() !== "" && (
-                    <Text style={styles.note}>
-                      Comments: {details.Comment}
-                    </Text>
+        <FlatList
+          data={patients}
+          keyExtractor={(item) => item.key}
+          renderItem={({ item }) => (
+            <View style={styles.patientContainer}>
+              <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
+                <Text style={styles.patientName}>{item.key}</Text>
+              </TouchableOpacity>
+              {expandedPatient === item.key && (
+                <View>
+                  {/* Display Test Start Time and Test End Time once */}
+                  {item.testDetails.TestStartTime && item.testDetails.TestEndTime && (
+                    <View style={styles.testDetailsContainer}>
+                      <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
+                      <Text style={styles.testDetail}>Test End Time: {item.testDetails.TestEndTime}</Text>
+                    </View>
                   )}
+
+                  {/* Display patient entries */}
+                  {item.entries.map((entry) => (
+                    <View key={entry.timestamp} style={styles.noteContainer}>
+                      <Text style={styles.noteDate}>{entry.timestamp}</Text>
+                      <Text style={styles.note}>Activity: {entry.Activity}</Text>
+                      <Text style={styles.note}>Symptom: {entry.Symptom}</Text>
+                      {entry.Comment && entry.Comment.trim() !== "" && (
+                        <Text style={styles.note}>Comments: {entry.Comment}</Text>
+                      )}
+                    </View>
+                  ))}
                 </View>
-              ) : null;
-            })}
-        </View>
-      )}
-    </View>
-  )}
-/>
-
-
+              )}
+            </View>
+          )}
+        />
       )}
     </View>
   );
@@ -230,5 +231,17 @@ const styles = StyleSheet.create({
   note: {
     fontSize: 16,
     marginTop: 5,
+  },
+    testDetailsContainer: {
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  testDetail: {
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
