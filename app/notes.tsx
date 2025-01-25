@@ -1,155 +1,181 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
-import { database } from "../firebaseConfig"; // Assuming this is where your firebase config is stored
-import { ref, get } from "firebase/database";
+import React, { useState, useEffect } from "react";
+import { Alert, TextInput, View, ScrollView, TouchableOpacity } from "react-native";
+import { ref, set, push } from "firebase/database";
+import { database } from "../firebaseConfig";
 
-export default function SearchPatientNotes() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [patients, setPatients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
-  const [authenticated, setAuthenticated] = useState(false); // Authentication state
-  const [password, setPassword] = useState(""); // Password input state
-  const correctPassword = "hellouzoma"; // Correct password
+export default function Index() {
+  const [rows, setRows] = useState([{ action: "", symptom: "", comment: "" }]);
+  const [name, setName] = useState("");
+  const [hospitalNo, setHospitalNo] = useState("");
+  const [testStartTime, setTestStartTime] = useState("");
+  const [showComments, setShowComments] = useState(false);
+  const [testEnded, setTestEnded] = useState(false);
 
-  // Handle password submission
-  const handlePasswordSubmit = () => {
-    if (password === correctPassword) {
-      setAuthenticated(true);
-      setPassword(""); // Clear the password field
-    } else {
-      Alert.alert("Incorrect Password", "Please try again.");
+  useEffect(() => {
+    const savedName = localStorage.getItem("name");
+    const savedHospitalNo = localStorage.getItem("hospitalNo");
+    const savedTestStartTime = localStorage.getItem("testStartTime");
+
+    if (savedName) setName(savedName);
+    if (savedHospitalNo) setHospitalNo(savedHospitalNo);
+    if (savedTestStartTime) setTestStartTime(savedTestStartTime);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("name", name);
+    localStorage.setItem("hospitalNo", hospitalNo);
+    localStorage.setItem("testStartTime", testStartTime);
+  }, [name, hospitalNo, testStartTime]);
+
+  const calculateTestEndTime = (startTime) => {
+    const startDate = new Date(startTime);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 24);
+    return endDate.toISOString().slice(0, 16).replace("T", " ");
+  };
+
+  const checkTestEnd = () => {
+    const endTime = calculateTestEndTime(testStartTime);
+    const currentTime = new Date().toISOString().slice(0, 16);
+    if (currentTime >= endTime) {
+      setTestEnded(true);
     }
   };
 
-  // Function to handle search logic
-  const handleSearch = async () => {
-    if (searchQuery.trim() === "") return;
+  useEffect(() => {
+    if (testStartTime) {
+      checkTestEnd();
+    }
+  }, [testStartTime]);
 
-    setLoading(true);
+  const saveData = () => {
+    if (testEnded) {
+      Alert.alert("Test Ended", "You cannot submit data. The test has ended.");
+      return;
+    }
 
-    try {
-      const snapshot = await get(ref(database, "entries/"));
-      const data = snapshot.val();
+    if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
+      Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
+      return;
+    }
 
-      if (!data) {
-        setPatients([]);
-        return;
-      }
+    const groupKey = `${name}-${hospitalNo}`;
+    const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-      const results = Object.keys(data).filter((patientKey) =>
-        patientKey.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    const startDate = new Date(testStartTime);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 24);
+    const testEndTime = endDate.toISOString().slice(0, 16).replace("T", " ");
 
-      const resultPatients = results.map((patientKey) => {
-        const patientData = data[patientKey];
-        const testDetails = patientData.TestDetails || {}; // Extracting test details
+    const dataToSave = rows
+      .map((row) => {
+        if (row.action.trim() && row.symptom.trim()) {
+          return {
+            Activity: row.action,
+            Symptom: row.symptom,
+            Comment: row.comment,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
 
-        return {
-          key: patientKey,
-          testDetails,
-          entries: Object.keys(patientData)
-            .filter((key) => key !== "TestDetails" && key !== "key")
-            .map((timestamp) => ({
-              timestamp,
-              ...patientData[timestamp]["0"], // Accessing data under "0"
-            })),
-        };
+    if (dataToSave.length === 0) {
+      Alert.alert("Error", "Please complete the rows before submitting.");
+      return;
+    }
+
+    // Push data to Firebase under the new structure
+    const newEntryRef = ref(database, `entries/${groupKey}/${testStartTime}-${testEndTime}/`);
+    const newRowRef = push(newEntryRef);
+
+    set(newRowRef, {
+      timestamp,
+      data: dataToSave,
+    })
+      .then(() => {
+        Alert.alert("Success", "Data saved successfully!");
+        setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
+      })
+      .catch((error) => {
+        Alert.alert("Error", "Failed to save data.");
+        console.error("Error saving data:", error);
       });
-
-      setPatients(resultPatients);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
-  // Handle text input changes
-  const handleChange = (text: string) => {
-    setSearchQuery(text);
+  const toggleComments = () => {
+    setShowComments((prev) => !prev);
   };
-
-  // Toggle the display of patient details
-  const togglePatientDetails = (patientKey: string) => {
-    setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
-  };
-
-  if (!authenticated) {
-    return (
-      <View style={styles.authContainer}>
-        <Text style={styles.authText}>Enter Password to Access Notes</Text>
-        <TextInput
-          style={styles.authInput}
-          secureTextEntry
-          placeholder="Enter Password"
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity style={styles.authButton} onPress={handlePasswordSubmit}>
-          <Text style={styles.authButtonText}>Submit</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1 }}>
       <TextInput
-        style={styles.input}
-        placeholder="Search by patient name or hospital no"
-        value={searchQuery}
-        onChangeText={handleChange}
-        onSubmitEditing={handleSearch}
+        placeholder="Enter Your Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        placeholder="Enter Your Hospital Id"
+        value={hospitalNo}
+        onChangeText={setHospitalNo}
       />
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <FlatList
-          data={patients}
-          keyExtractor={(item) => item.key}
-          renderItem={({ item }) => (
-            <View style={styles.patientContainer}>
-              <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-                <Text style={styles.patientName}>{item.key}</Text>
-              </TouchableOpacity>
-              {expandedPatient === item.key && (
-                <View>
-                  {/* Display Test Start Time and Test End Time once */}
-                  {item.testDetails.TestStartTime && item.testDetails.TestEndTime && (
-                    <View style={styles.testDetailsContainer}>
-                      <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
-                      <Text style={styles.testDetail}>Test End Time: {item.testDetails.TestEndTime}</Text>
-                    </View>
-                  )}
+      <TextInput
+        type="datetime-local"
+        value={testStartTime}
+        onChange={(e) => setTestStartTime(e.target.value)}
+      />
 
-                  {/* Display patient entries */}
-                  {item.entries.map((entry) => (
-                    <View key={entry.timestamp} style={styles.noteContainer}>
-                      <Text style={styles.noteDate}>{entry.timestamp}</Text>
-                      <Text style={styles.note}>Activity: {entry.Activity}</Text>
-                      <Text style={styles.note}>Symptom: {entry.Symptom}</Text>
-                      {entry.Comment && entry.Comment.trim() !== "" && (
-                        <Text style={styles.note}>Comments: {entry.Comment}</Text>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-        />
+      {testStartTime && (
+        <Text>
+          {testEnded
+            ? "Test has ended. You cannot add another entry."
+            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
+        </Text>
       )}
+
+      <ScrollView>
+        {rows.map((row, index) => (
+          <View key={index}>
+            <TextInput
+              placeholder="What are you doing?"
+              value={row.action}
+              onChangeText={(text) => {
+                const updatedRows = [...rows];
+                updatedRows[index].action = text;
+                setRows(updatedRows);
+              }}
+              editable={!testEnded}
+            />
+            <TextInput
+              placeholder="What are you feeling?"
+              value={row.symptom}
+              onChangeText={(text) => {
+                const updatedRows = [...rows];
+                updatedRows[index].symptom = text;
+                setRows(updatedRows);
+              }}
+              editable={!testEnded}
+            />
+            {showComments && (
+              <TextInput
+                placeholder="Add a comment"
+                value={row.comment}
+                onChangeText={(text) => {
+                  const updatedRows = [...rows];
+                  updatedRows[index].comment = text;
+                  setRows(updatedRows);
+                }}
+                editable={!testEnded}
+              />
+            )}
+          </View>
+        ))}
+      </ScrollView>
+
+      <TouchableOpacity onPress={saveData} disabled={testEnded}>
+        <Text>Submit</Text>
+      </TouchableOpacity>
     </View>
   );
 }
