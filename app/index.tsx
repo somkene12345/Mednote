@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  TextInput,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
-import { ref, set } from "firebase/database";
-import { database } from "../firebaseConfig"; // Make sure firebaseConfig.js is correctly set up
+import { Alert, TextInput, View, ScrollView, TouchableOpacity } from "react-native";
+import { ref, set, push } from "firebase/database";
+import { database } from "../firebaseConfig";
 
 export default function Index() {
   const [rows, setRows] = useState([{ action: "", symptom: "", comment: "" }]);
@@ -17,10 +9,8 @@ export default function Index() {
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
 
-  // Load data from local storage on initial render
   useEffect(() => {
     const savedName = localStorage.getItem("name");
     const savedHospitalNo = localStorage.getItem("hospitalNo");
@@ -31,14 +21,12 @@ export default function Index() {
     if (savedTestStartTime) setTestStartTime(savedTestStartTime);
   }, []);
 
-  // Autosave data to local storage
   useEffect(() => {
     localStorage.setItem("name", name);
     localStorage.setItem("hospitalNo", hospitalNo);
     localStorage.setItem("testStartTime", testStartTime);
   }, [name, hospitalNo, testStartTime]);
 
-  // Calculate the test end time by adding 24 hours to the start time
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
     const endDate = new Date(startDate);
@@ -46,7 +34,6 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  // Check if test has ended
   const checkTestEnd = () => {
     const endTime = calculateTestEndTime(testStartTime);
     const currentTime = new Date().toISOString().slice(0, 16);
@@ -75,34 +62,37 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
+    const startDate = new Date(testStartTime);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 24);
+    const testEndTime = endDate.toISOString().slice(0, 16).replace("T", " ");
+
     const dataToSave = rows
       .map((row) => {
         if (row.action.trim() && row.symptom.trim()) {
-          const startDate = new Date(testStartTime);
-          const endDate = new Date(startDate);
-          endDate.setHours(startDate.getHours() + 25);
-
           return {
             Activity: row.action,
             Symptom: row.symptom,
             Comment: row.comment,
-            TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
-            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
           };
         }
         return null;
       })
-      .filter(Boolean); // Remove empty rows
+      .filter(Boolean);
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
       return;
     }
 
-    // Define reference path for data in Firebase
-    const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
+    // Push data to Firebase under the new structure
+    const newEntryRef = ref(database, `entries/${groupKey}/${testStartTime}-${testEndTime}/`);
+    const newRowRef = push(newEntryRef);
 
-    set(newEntryRef, dataToSave)
+    set(newRowRef, {
+      timestamp,
+      data: dataToSave,
+    })
       .then(() => {
         Alert.alert("Success", "Data saved successfully!");
         setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
@@ -115,142 +105,81 @@ export default function Index() {
 
   const toggleComments = () => {
     setShowComments((prev) => !prev);
-    setMenuVisible(false); // Close the menu after toggling comments
   };
-
-  const toggleMenu = () => setMenuVisible(!menuVisible);
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Header Inputs */}
-      <View style={styles.headerContainer}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Name:</Text>
-          <TextInput
-            placeholder="Enter Your Name"
-            style={styles.headerInput}
-            value={name}
-            onChangeText={setName}
-            editable // Always editable
-          />
-        </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hospital Id:</Text>
-          <TextInput
-            placeholder="Enter Your Hospital Id"
-            style={styles.headerInput}
-            value={hospitalNo}
-            onChangeText={setHospitalNo}
-            editable // Always editable
-          />
-        </View>
-      </View>
+      <TextInput
+        placeholder="Enter Your Name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        placeholder="Enter Your Hospital Id"
+        value={hospitalNo}
+        onChangeText={setHospitalNo}
+      />
 
-      {/* Test Start Time */}
-      <Text style={styles.labelTi}>Test Start Time:</Text>
-      <Text style={styles.teStTi}>
-        <input
-          type="datetime-local"
-          style={styles.inputit}
-          value={testStartTime}
-          onChange={(e) => setTestStartTime(e.target.value)}
-          disabled={false} // Always editable
-        />
-      </Text>
+      <TextInput
+        type="datetime-local"
+        value={testStartTime}
+        onChange={(e) => setTestStartTime(e.target.value)}
+      />
 
-      {/* Test End Time */}
       {testStartTime && (
-        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
-          {testEnded ? "Test has ended. You cannot add another entry." : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
+        <Text>
+          {testEnded
+            ? "Test has ended. You cannot add another entry."
+            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
 
-      {/* Table */}
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.headerText}>Activity</Text>
-            <Text style={styles.headerText}>Symptom</Text>
+      <ScrollView>
+        {rows.map((row, index) => (
+          <View key={index}>
+            <TextInput
+              placeholder="What are you doing?"
+              value={row.action}
+              onChangeText={(text) => {
+                const updatedRows = [...rows];
+                updatedRows[index].action = text;
+                setRows(updatedRows);
+              }}
+              editable={!testEnded}
+            />
+            <TextInput
+              placeholder="What are you feeling?"
+              value={row.symptom}
+              onChangeText={(text) => {
+                const updatedRows = [...rows];
+                updatedRows[index].symptom = text;
+                setRows(updatedRows);
+              }}
+              editable={!testEnded}
+            />
+            {showComments && (
+              <TextInput
+                placeholder="Add a comment"
+                value={row.comment}
+                onChangeText={(text) => {
+                  const updatedRows = [...rows];
+                  updatedRows[index].comment = text;
+                  setRows(updatedRows);
+                }}
+                editable={!testEnded}
+              />
+            )}
           </View>
-
-          {rows.map((row, index) => (
-            <View key={index} style={styles.tableRow}>
-              <View style={styles.rowTop}>
-                <TextInput
-                  placeholder="What are you doing?"
-                  style={styles.input}
-                  value={row.action}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].action = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-                <TextInput
-                  placeholder="What are you feeling?"
-                  style={styles.input}
-                  value={row.symptom}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].symptom = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-              </View>
-              {showComments && (
-                <TextInput
-                  placeholder="Add a comment"
-                  style={styles.commentInput}
-                  value={row.comment}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].comment = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData} disabled={testEnded}>
-          <Text style={styles.addButtonText}>Submit</Text>
-        </TouchableOpacity>
-
-        {/* Options Menu */}
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-              <Text style={styles.menuItemText}>
-                {showComments ? "Hide Comments" : "Add Comments"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
-              <Text style={styles.menuItemText}>Close Menu</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Toggle Button to show options menu */}
-        {!menuVisible && (
-          <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
-            <Text style={styles.toggleButtonText}>Options</Text>
-          </TouchableOpacity>
-        )}
+        ))}
       </ScrollView>
+
+      <TouchableOpacity onPress={saveData} disabled={testEnded}>
+        <Text>Submit</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   teStTi: {
