@@ -37,6 +37,14 @@ export default function Index() {
     localStorage.setItem("testStartTime", testStartTime);
   }, [name, hospitalNo, testStartTime]);
 
+  // Calculate the test end time by adding 24 hours to the start time
+  const calculateTestEndTime = (startTime) => {
+    const startDate = new Date(startTime);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 24);
+    return endDate.toISOString().slice(0, 16).replace("T", " ");
+  };
+
   const saveData = () => {
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
       Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
@@ -124,9 +132,13 @@ export default function Index() {
           onChange={(e) => setTestStartTime(e.target.value)}
         />
       </Text>
-      <Text style={styles.tet}>
-        The test ends by {endDate.toISOString().slice(0, 16).replace("T", " ")}
-</Text>
+
+      {/* Test End Time */}
+      {testStartTime && (
+        <Text style={styles.testEndTime}>
+          Test ends by: {calculateTestEndTime(testStartTime)}
+        </Text>
+      )}
 
       {/* Table */}
       <ScrollView style={styles.scrollContainer}>
@@ -213,10 +225,6 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  tet: {
-  color: "#fff"
-  },
-                                 
   teStTi: {
     alignSelf: "center",
     width: "auto",
@@ -238,6 +246,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 10,
     boxSizing: "border-box",
+  },
+  testEndTime: {
+    color: "red",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 10,
   },
   headerContainer: {
     flexDirection: "row",
@@ -266,37 +281,33 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
   },
-  scrollContainer: {
-    flex: 1,
-  },
   tableContainer: {
-    marginLeft: 20,
-    marginRight: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    margin: 10,
+    backgroundColor: "#fff",
+    borderRadius: 6,
   },
   tableHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#007AFF",
+    backgroundColor: "#f1f1f1",
     padding: 10,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
   },
   headerText: {
-    color: "#fff",
-    fontWeight: "bold",
     fontSize: 16,
-    textAlign: "center",
-    flex: 1,
+    fontWeight: "bold",
+    color: "#333",
   },
   tableRow: {
-    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 10,
   },
   rowTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    width: "100%",
   },
   input: {
     width: "48%",
