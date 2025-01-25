@@ -130,7 +130,7 @@ export default function Index() {
             style={styles.headerInput}
             value={name}
             onChangeText={setName}
-            editable={!testEnded} // Disable input if test has ended
+            editable={!testEnded} // Allow editing name even if test ended
           />
         </View>
         <View style={styles.inputGroup}>
@@ -140,7 +140,7 @@ export default function Index() {
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
-            editable={!testEnded} // Disable input if test has ended
+            editable={!testEnded} // Allow editing hospital ID even if test ended
           />
         </View>
       </View>
@@ -153,7 +153,7 @@ export default function Index() {
           style={styles.inputit}
           value={testStartTime}
           onChange={(e) => setTestStartTime(e.target.value)}
-          disabled={testEnded} // Disable input if test has ended
+          disabled={testEnded} // Allow editing test start time even if test ended
         />
       </Text>
 
