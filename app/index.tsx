@@ -62,6 +62,11 @@ export default function Index() {
   }, [testStartTime]);
 
   const saveData = () => {
+    if (testEnded) {
+      Alert.alert("Test Ended", "You cannot submit data. The test has ended.");
+      return;
+    }
+
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
       Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
       return;
@@ -114,14 +119,6 @@ export default function Index() {
 
   const toggleMenu = () => setMenuVisible(!menuVisible);
 
-  const addRow = () => {
-    if (testEnded) {
-      Alert.alert("Test Ended", "The test has ended. You cannot add more entries.");
-    } else {
-      setRows([...rows, { action: "", symptom: "", comment: "" }]);
-    }
-  };
-
   return (
     <View style={{ flex: 1 }}>
       {/* Header Inputs */}
@@ -133,6 +130,7 @@ export default function Index() {
             style={styles.headerInput}
             value={name}
             onChangeText={setName}
+            editable={!testEnded} // Disable input if test has ended
           />
         </View>
         <View style={styles.inputGroup}>
@@ -142,6 +140,7 @@ export default function Index() {
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
+            editable={!testEnded} // Disable input if test has ended
           />
         </View>
       </View>
@@ -154,6 +153,7 @@ export default function Index() {
           style={styles.inputit}
           value={testStartTime}
           onChange={(e) => setTestStartTime(e.target.value)}
+          disabled={testEnded} // Disable input if test has ended
         />
       </Text>
 
@@ -247,13 +247,6 @@ export default function Index() {
           </TouchableOpacity>
         )}
       </ScrollView>
-
-      {/* Button to add a new row */}
-      {!testEnded && (
-        <TouchableOpacity style={styles.fakeSubButton} onPress={addRow}>
-          <Text style={styles.addButtonText}>Add New Row</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
