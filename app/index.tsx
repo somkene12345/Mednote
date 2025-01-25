@@ -174,15 +174,6 @@ export default function Index() {
             </View>
           ))}
         </View>
-        
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
-          <Text style={styles.addButtonText}>Submit</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
-  );
-}
 
         {/* Toggle Comments Button */}
         <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
@@ -191,7 +182,14 @@ export default function Index() {
           </Text>
         </TouchableOpacity>
 
-
+        {/* Submit Button */}
+        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
+          <Text style={styles.addButtonText}>Submit</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  );
+}
 
 
 const styles = StyleSheet.create({
@@ -308,9 +306,10 @@ const styles = StyleSheet.create({
   },
   fakeSubButton: {
     backgroundColor: "#00FF7A",
+    padding: 10,
     margin: 15,
     borderRadius: 6,
-    width: "100%",
+    width: "auto",
     alignItems: "center",
     alignSelf: "center",
   },
