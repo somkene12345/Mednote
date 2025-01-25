@@ -46,25 +46,23 @@ export default function SearchPatientNotes() {
         return;
       }
 
-      // Loop through all the patients to find matching results based on groupKey
-      const results = Object.keys(data).filter((groupKey) =>
-        groupKey.toLowerCase().includes(searchQuery.toLowerCase())
+      const results = Object.keys(data).filter((patientKey) =>
+        patientKey.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      const resultPatients = results.map((groupKey) => {
-        const groupData = data[groupKey];
-        const patientEntries = Object.keys(groupData).map((testKey) => {
-          const testData = groupData[testKey];
-          const entries = Object.keys(testData).map((timestamp) => ({
-            timestamp,
-            ...testData[timestamp]["0"], // Accessing data under "0"
-          }));
-          return { testKey, entries };
-        });
+      const resultPatients = results.map((patientKey) => {
+        const patientData = data[patientKey];
+        const testDetails = patientData.TestDetails || {}; // Extracting test details
 
         return {
-          key: groupKey,
-          patientEntries,
+          key: patientKey,
+          testDetails,
+          entries: Object.keys(patientData)
+            .filter((key) => key !== "TestDetails" && key !== "key")
+            .map((timestamp) => ({
+              timestamp,
+              ...patientData[timestamp]["0"], // Accessing data under "0"
+            })),
         };
       });
 
@@ -127,20 +125,23 @@ export default function SearchPatientNotes() {
               </TouchableOpacity>
               {expandedPatient === item.key && (
                 <View>
+                  {/* Display Test Start Time and Test End Time once */}
+                  {item.testDetails.TestStartTime && item.testDetails.TestEndTime && (
+                    <View style={styles.testDetailsContainer}>
+                      <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
+                      <Text style={styles.testDetail}>Test End Time: {item.testDetails.TestEndTime}</Text>
+                    </View>
+                  )}
+
                   {/* Display patient entries */}
-                  {item.patientEntries.map((testEntry) => (
-                    <View key={testEntry.testKey}>
-                      <Text style={styles.testDetail}>Test Period: {testEntry.testKey}</Text>
-                      {testEntry.entries.map((entry) => (
-                        <View key={entry.timestamp} style={styles.noteContainer}>
-                          <Text style={styles.noteDate}>{entry.timestamp}</Text>
-                          <Text style={styles.note}>Activity: {entry.Activity}</Text>
-                          <Text style={styles.note}>Symptom: {entry.Symptom}</Text>
-                          {entry.Comment && entry.Comment.trim() !== "" && (
-                            <Text style={styles.note}>Comments: {entry.Comment}</Text>
-                          )}
-                        </View>
-                      ))}
+                  {item.entries.map((entry) => (
+                    <View key={entry.timestamp} style={styles.noteContainer}>
+                      <Text style={styles.noteDate}>{entry.timestamp}</Text>
+                      <Text style={styles.note}>Activity: {entry.Activity}</Text>
+                      <Text style={styles.note}>Symptom: {entry.Symptom}</Text>
+                      {entry.Comment && entry.Comment.trim() !== "" && (
+                        <Text style={styles.note}>Comments: {entry.Comment}</Text>
+                      )}
                     </View>
                   ))}
                 </View>
