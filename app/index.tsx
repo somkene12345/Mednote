@@ -306,10 +306,9 @@ const styles = StyleSheet.create({
   },
   fakeSubButton: {
     backgroundColor: "#00FF7A",
-    padding: 10,
     margin: 15,
     borderRadius: 6,
-    width: "auto",
+    width: "100%",
     alignItems: "center",
     alignSelf: "center",
   },
