@@ -42,7 +42,7 @@ export default function Index() {
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
     const endDate = new Date(startDate);
-    endDate.setHours(startDate.getHours() + 24);
+    endDate.setHours(startDate.getHours() + 25);
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
