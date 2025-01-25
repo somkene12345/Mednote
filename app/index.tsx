@@ -17,8 +17,8 @@ export default function Index() {
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
 
+  // Load data from local storage on initial render
   useEffect(() => {
     const savedName = localStorage.getItem("name");
     const savedHospitalNo = localStorage.getItem("hospitalNo");
@@ -29,6 +29,7 @@ export default function Index() {
     if (savedTestStartTime) setTestStartTime(savedTestStartTime);
   }, []);
 
+  // Autosave data to local storage
   useEffect(() => {
     localStorage.setItem("name", name);
     localStorage.setItem("hospitalNo", hospitalNo);
@@ -41,7 +42,7 @@ export default function Index() {
       return;
     }
 
-    const groupKey = `${name}-${hospitalNo}`;
+    const groupKey = ${name}-${hospitalNo};
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     const dataToSave = rows
@@ -61,19 +62,19 @@ export default function Index() {
         }
         return null;
       })
-      .filter(Boolean);
+      .filter(Boolean); // Remove empty rows
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
       return;
     }
 
-    const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
+    const newEntryRef = ref(database, entries/${groupKey}/${timestamp});
 
     set(newEntryRef, dataToSave)
       .then(() => {
         Alert.alert("Success", "Data saved successfully!");
-        setRows([{ action: "", symptom: "", comment: "" }]);
+        setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
       })
       .catch((error) => {
         Alert.alert("Error", "Failed to save data.");
@@ -83,15 +84,11 @@ export default function Index() {
 
   const toggleComments = () => {
     setShowComments((prev) => !prev);
-    setMenuVisible(false); // Close menu when an option is selected
-  };
-
-  const toggleMenu = () => {
-    setMenuVisible((prev) => !prev);
   };
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Header Inputs */}
       <View style={styles.headerContainer}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Name:</Text>
@@ -113,6 +110,7 @@ export default function Index() {
         </View>
       </View>
 
+      {/* Test Start Time */}
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
         <input
@@ -123,6 +121,7 @@ export default function Index() {
         />
       </Text>
 
+      {/* Table */}
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
@@ -175,159 +174,150 @@ export default function Index() {
             </View>
           ))}
         </View>
-
+        
+        {/* Submit Button */}
         <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
-
-        <View style={styles.menuWrapper}>
-          <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
-            <Text style={styles.menuButtonText}>Options</Text>
-          </TouchableOpacity>
-
-          {menuVisible && (
-            <View style={styles.menuContainer}>
-              <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-                <Text style={styles.menuItemText}>
-                  {showComments ? "Hide Comments" : "Add Comments"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+        
+        {/* Toggle Comments Button */}
+        <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
+          <Text style={styles.toggleButtonText}>
+            {showComments ? "Hide Comments" : "Add Comments"}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
+  teStTi: {
+    alignSelf: "center",
+    width: "auto",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    marginBottom: 20,
+  },
+  inputit: {
+    fontFamily: "Arial, sans-serif",
+    outline: "none",
+    color: "#333",
+    width: "auto",
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    padding: 10,
+    boxSizing: "border-box",
+  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
-    marginVertical: 10,
+    margin: 20,
   },
   inputGroup: {
     flex: 1,
-    marginHorizontal: 5,
+    marginHorizontal: 10,
+    marginBottom: 10,
   },
   label: {
     fontSize: 16,
-    fontWeight: "bold",
     marginBottom: 5,
-  },
-  headerInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    fontSize: 16,
   },
   labelTi: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 10,
-    paddingHorizontal: 10,
+    marginBottom: 5,
+    alignSelf: "center",
   },
-  teStTi: {
-    paddingHorizontal: 10,
-  },
-  inputit: {
+  headerInput: {
     width: "100%",
-    padding: 10,
-    fontSize: 16,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: "#fff",
   },
   scrollContainer: {
     flex: 1,
-    marginTop: 10,
   },
   tableContainer: {
-    marginHorizontal: 10,
-    borderRadius: 5,
+    marginLeft: 20,
+    marginRight: 20,
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 8,
     backgroundColor: "#f9f9f9",
   },
   tableHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#eaeaea",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    backgroundColor: "#007AFF",
+    padding: 10,
   },
   headerText: {
-    fontSize: 16,
+    color: "#fff",
     fontWeight: "bold",
+    fontSize: 16,
+    textAlign: "center",
+    flex: 1,
   },
   tableRow: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    marginBottom: 10,
   },
   rowTop: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingHorizontal: 10,
   },
   input: {
+    width: "48%",
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 6,
     padding: 10,
-    fontSize: 14,
-    flex: 1,
-    marginHorizontal: 5,
+    backgroundColor: "#fff",
   },
   commentInput: {
+    marginHorizontal: 10,
+    marginTop: 10,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
+    borderRadius: 6,
     padding: 10,
-    fontSize: 14,
-    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+  toggleButton: {
+    backgroundColor: "#FFA500",
+    padding: 10,
+    margin: 15,
+    borderRadius: 6,
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  toggleButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   fakeSubButton: {
-    marginHorizontal: 10,
-    marginTop: 20,
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 5,
+    backgroundColor: "#00FF7A",
+    paddingTop: 10,
+    paddingBottom: 10,
+    margin: 15,
+    borderRadius: 6,
+    width: "95%",
     alignItems: "center",
+    alignSelf: "center",
   },
+
   addButtonText: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  menuWrapper: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  menuButton: {
-    backgroundColor: "#007bff",
-    padding: 10,
-    borderRadius: 5,
-  },
-  menuButtonText: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
-  },
-  menuContainer: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#eaeaea",
-    borderRadius: 5,
-  },
-  menuItem: {
-    paddingVertical: 10,
-  },
-  menuItemText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#007bff",
   },
 });
