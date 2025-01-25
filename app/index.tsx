@@ -17,6 +17,7 @@ export default function Index() {
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   // Load data from local storage on initial render
   useEffect(() => {
@@ -84,7 +85,10 @@ export default function Index() {
 
   const toggleComments = () => {
     setShowComments((prev) => !prev);
+    setMenuVisible(false); // Close the menu after toggling comments
   };
+
+  const toggleMenu = () => setMenuVisible(!menuVisible);
 
   return (
     <View style={{ flex: 1 }}>
@@ -174,23 +178,36 @@ export default function Index() {
             </View>
           ))}
         </View>
-        
+
         {/* Submit Button */}
         <TouchableOpacity style={styles.fakeSubButton} onPress={saveData}>
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
-        
-        {/* Toggle Comments Button */}
-        <TouchableOpacity style={styles.toggleButton} onPress={toggleComments}>
-          <Text style={styles.toggleButtonText}>
-            {showComments ? "Hide Comments" : "Add Comments"}
-          </Text>
-        </TouchableOpacity>
+
+        {/* Options Menu */}
+        {menuVisible && (
+          <View style={styles.menu}>
+            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
+              <Text style={styles.menuItemText}>
+                {showComments ? "Hide Comments" : "Add Comments"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
+              <Text style={styles.menuItemText}>Close Menu</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Toggle Button to show options menu */}
+        {!menuVisible && (
+          <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
+            <Text style={styles.toggleButtonText}>Options</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   teStTi: {
@@ -310,14 +327,26 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     margin: 15,
     borderRadius: 6,
-    width: "100%",
+    width: "95%",
     alignItems: "center",
     alignSelf: "center",
   },
-
   addButtonText: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  menu: {
+    backgroundColor: "#f9f9f9",
+    margin: 15,
+    padding: 10,
+    borderRadius: 6,
+  },
+  menuItem: {
+    padding: 10,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: "#007AFF",
   },
 });
