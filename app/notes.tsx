@@ -161,7 +161,7 @@ export default function SearchPatientNotes() {
       </Text>
       {item.testDetails.TestEndTime ? (
         <Text style={styles.sectionHeaderText}>
-          Test End Time: {item.testDetails.TestEndTime}
+          Test End Time: {item.TestEndTime}
         </Text>
       ) : (
         <Text style={styles.sectionHeaderText}>
