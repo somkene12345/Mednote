@@ -42,7 +42,7 @@ export default function Index() {
       return;
     }
 
-    const groupKey = ${name}-${hospitalNo};
+    const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     const dataToSave = rows
@@ -69,7 +69,7 @@ export default function Index() {
       return;
     }
 
-    const newEntryRef = ref(database, entries/${groupKey}/${timestamp});
+    const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
 
     set(newEntryRef, dataToSave)
       .then(() => {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     margin: 15,
     borderRadius: 6,
-    width: "95%",
+    width: "100%",
     alignItems: "center",
     alignSelf: "center",
   },
