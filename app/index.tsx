@@ -306,6 +306,8 @@ const styles = StyleSheet.create({
   },
   fakeSubButton: {
     backgroundColor: "#00FF7A",
+    paddingTop: 10,
+    paddingBottom: 10,
     margin: 15,
     borderRadius: 6,
     width: "100%",
