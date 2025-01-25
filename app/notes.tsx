@@ -141,40 +141,45 @@ export default function SearchPatientNotes() {
               <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
                 <Text style={styles.patientName}>{item.key}</Text>
               </TouchableOpacity>
-{expandedPatient === item.key && (
-  <View>
-    {/* Display Test Start Time and Test End Time */}
-    {item.testDetails.TestStartTime && item.testDetails.TestEndTime ? (
-      <View style={styles.testDetailsContainer}>
-        <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
-        <Text style={styles.testDetail}>Test End Time: {item.testDetails.TestEndTime}</Text>
-      </View>
-    ) : (
-      <Text style={styles.testDetail}>Test times not available</Text>
-    )}
+              {expandedPatient === item.key && (
+                <View>
+                  {/* Display Test Start Time and Test End Time once */}
+                  {item.testDetails.TestStartTime && item.testDetails.TestEndTime && (
+                    <View style={styles.testDetailsContainer}>
+                      <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
+                      <Text style={styles.testDetail}>Test End Time: {item.testDetails.TestEndTime}</Text>
+                    </View>
+                  )}
 
-    {/* Use SectionList to render grouped entries */}
-    <SectionList
-      sections={item.sections}
-      keyExtractor={(entry, index) => entry.timestamp + index}
-      renderSectionHeader={({ section: { title } }) => (
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionHeaderText}>Test Start Time: {title}</Text>
-        </View>
+<SectionList
+  sections={item.sections}
+  keyExtractor={(entry, index) => entry.timestamp + index}
+  renderSectionHeader={({ section: { title } }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>
+        Test Start Time: {title}
+      </Text>
+      {item.testDetails.TestEndTime && (
+        <Text style={styles.sectionHeaderText}>
+          Test End Time: {item.testDetails.TestEndTime}
+        </Text>
       )}
-      renderItem={({ item }) => (
-        <View style={styles.noteContainer}>
-          <Text style={styles.noteDate}>{item.timestamp}</Text>
-          <Text style={styles.note}>Activity: {item.Activity}</Text>
-          <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-          {item.Comment && item.Comment.trim() !== "" && (
-            <Text style={styles.note}>Comments: {item.Comment}</Text>
-          )}
-        </View>
+    </View>
+  )}
+  renderItem={({ item }) => (
+    <View style={styles.noteContainer}>
+      <Text style={styles.noteDate}>{item.timestamp}</Text>
+      <Text style={styles.note}>Activity: {item.Activity}</Text>
+      <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+      {item.Comment && item.Comment.trim() !== "" && (
+        <Text style={styles.note}>Comments: {item.Comment}</Text>
       )}
-    />
-  </View>
-)}
+    </View>
+  )}
+/>
+
+                </View>
+              )}
             </View>
           )}
         />
