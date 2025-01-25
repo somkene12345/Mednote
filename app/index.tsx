@@ -201,7 +201,6 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -331,6 +330,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#007bff",
   },
-});
-
 });
