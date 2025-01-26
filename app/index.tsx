@@ -119,7 +119,7 @@ export default function Index() {
   const toggleMenu = () => setMenuVisible(!menuVisible);
 
   const handlePasswordSubmit = () => {
-    if (password === "1234") {
+    if (password === "hellouzoma") {
       setPasswordCorrect(true);
       setModalVisible(false);
     } else {
