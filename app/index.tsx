@@ -158,10 +158,13 @@ export default function Index() {
           type="datetime-local"
           style={styles.inputit}
           value={testStartTime}
-          onChange={(e) => setTestStartTime(e.target.value)}
+          onChange={(e) => {
+            setTestStartTime(e.target.value);
+            setPasswordCorrect(false); // Reset password correctness when test start time is changed
+          }}
           disabled={false}
           onFocus={() => {
-            if (!passwordCorrect) setModalVisible(true);
+            setModalVisible(true);  // Show modal every time input is focused
           }}
         />
       </Text>
@@ -271,6 +274,12 @@ export default function Index() {
             >
               <Text style={styles.modalButtonText}>Submit</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -279,160 +288,116 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  teStTi: {
-    alignSelf: "center",
-    width: "auto",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    marginBottom: 20,
-  },
-  inputit: {
-    fontFamily: "Arial, sans-serif",
-    outline: "none",
-    color: "#333",
-    width: "auto",
-    alignSelf: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    padding: 10,
-    boxSizing: "border-box",
-  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    margin: 20,
+    padding: 10,
   },
   inputGroup: {
+    flexDirection: "column",
     flex: 1,
-    marginHorizontal: 10,
-    marginBottom: 10,
+    marginRight: 10,
   },
   label: {
     fontSize: 16,
     marginBottom: 5,
-  },
-  labelTi: {
-    fontSize: 16,
-    marginBottom: 5,
-    alignSelf: "center",
+    color: "#333",
   },
   headerInput: {
-    width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
     padding: 10,
-    backgroundColor: "#fff",
+    fontSize: 16,
   },
-  scrollContainer: {
-    flex: 1,
+  labelTi: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  teStTi: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  testEnded: {
+    color: "red",
+    fontSize: 16,
+    marginTop: 10,
+  },
+  testEndTime: {
+    color: "green",
+    fontSize: 16,
+    marginTop: 10,
   },
   tableContainer: {
-    marginLeft: 20,
-    marginRight: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
+    padding: 20,
   },
   tableHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#007AFF",
-    padding: 10,
+    marginBottom: 10,
   },
   headerText: {
-    color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
-    textAlign: "center",
     flex: 1,
+    fontSize: 16,
   },
   tableRow: {
+    flexDirection: "row",
     marginBottom: 10,
   },
   rowTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
+    flex: 1,
   },
   input: {
-    width: "48%",
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
     padding: 10,
-    backgroundColor: "#fff",
+    fontSize: 16,
+    flex: 1,
+    marginRight: 10,
   },
   commentInput: {
-    marginHorizontal: 10,
-    marginTop: 10,
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
     padding: 10,
-    backgroundColor: "#fff",
-  },
-  toggleButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    margin: 15,
-    borderRadius: 6,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  toggleButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
     fontSize: 16,
+    marginTop: 10,
   },
   fakeSubButton: {
-    backgroundColor: "#00FF7A",
-    paddingTop: 10,
-    paddingBottom: 10,
-    margin: 15,
-    borderRadius: 6,
-    width: "95%",
+    backgroundColor: "#28a745",
+    padding: 15,
+    marginTop: 20,
+    marginBottom: 20,
     alignItems: "center",
-    alignSelf: "center",
+    borderRadius: 5,
   },
   addButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontSize: 18,
+  },
+  toggleButton: {
+    backgroundColor: "#17a2b8",
+    padding: 10,
+    alignItems: "center",
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  toggleButtonText: {
+    color: "#fff",
     fontSize: 16,
   },
   menu: {
-    backgroundColor: "#f9f9f9",
-    margin: 15,
     padding: 10,
-    borderRadius: 6,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 5,
   },
   menuItem: {
     padding: 10,
   },
   menuItemText: {
     fontSize: 16,
-    color: "#007AFF",
+    color: "#333",
   },
-  testEndTime: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  testEnded: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-modalContainer: {
+  modalContainer: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -443,34 +408,42 @@ modalContainer: {
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 10,
     width: "80%",
-    alignItems: "center",
   },
   modalHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: 20,
+    marginBottom: 15,
+    textAlign: "center",
   },
   modalInput: {
     borderWidth: 1,
     borderColor: "#ccc",
-    width: "100%",
     padding: 10,
+    fontSize: 16,
     marginBottom: 20,
-    borderRadius: 5,
   },
   modalButton: {
-    backgroundColor: "#00FF7A",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: "#007bff",
+    padding: 15,
+    alignItems: "center",
     borderRadius: 5,
+    marginBottom: 10,
   },
   modalButtonText: {
-    color: "white",
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 18,
+  },
+  modalCloseButton: {
+    backgroundColor: "red",
+    padding: 15,
+    alignItems: "center",
+    borderRadius: 5,
+  },
+  modalCloseButtonText: {
+    color: "#fff",
+    fontSize: 18,
   },
 });
-
