@@ -473,6 +473,7 @@ modalContainer: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
+    margin: 10,
   },
   modalButtonText: {
     color: "white",
