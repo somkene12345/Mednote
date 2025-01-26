@@ -19,6 +19,9 @@ export default function Index() {
   const [showComments, setShowComments] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordCorrect, setPasswordCorrect] = useState(false);
 
   useEffect(() => {
     const savedName = localStorage.getItem("name");
@@ -115,6 +118,15 @@ export default function Index() {
 
   const toggleMenu = () => setMenuVisible(!menuVisible);
 
+  const handlePasswordSubmit = () => {
+    if (password === "1234") {
+      setPasswordCorrect(true);
+      setModalVisible(false);
+    } else {
+      Alert.alert("Error", "Incorrect password. Please try again.");
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.headerContainer}>
@@ -139,6 +151,7 @@ export default function Index() {
           />
         </View>
       </View>
+
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
         <input
@@ -147,6 +160,9 @@ export default function Index() {
           value={testStartTime}
           onChange={(e) => setTestStartTime(e.target.value)}
           disabled={false}
+          onFocus={() => {
+            if (!passwordCorrect) setModalVisible(true);
+          }}
         />
       </Text>
       {testStartTime && (
@@ -156,6 +172,7 @@ export default function Index() {
             : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
+
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
@@ -235,6 +252,28 @@ export default function Index() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Password Modal */}
+      {modalVisible && (
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Enter Password</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handlePasswordSubmit}
+            >
+              <Text style={styles.modalButtonText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -393,16 +432,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-
-  // Password Modal Styles
-  modalContainer: {
-    flex: 1,
+modalContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: "white",
     padding: 20,
     borderRadius: 8,
     width: "80%",
@@ -411,39 +452,25 @@ const styles = StyleSheet.create({
   modalHeader: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 15,
+    marginBottom: 10,
   },
   modalInput: {
-    width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 6,
+    width: "100%",
     padding: 10,
     marginBottom: 20,
-    backgroundColor: "#fff",
+    borderRadius: 5,
   },
   modalButton: {
-    backgroundColor: "#007AFF",
-    padding: 10,
-    borderRadius: 6,
-    width: "100%",
-    alignItems: "center",
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
   },
   modalButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  closeModalButton: {
-    marginTop: 10,
-    backgroundColor: "#FF6347",
-    padding: 10,
-    borderRadius: 6,
-    width: "100%",
-    alignItems: "center",
-  },
-  closeModalButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "white",
+    fontSize: 16,
   },
 });
 
