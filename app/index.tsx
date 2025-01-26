@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Modal,
 } from "react-native";
 import { ref, set } from "firebase/database";
 import { database } from "../firebaseConfig";
@@ -20,11 +19,7 @@ export default function Index() {
   const [showComments, setShowComments] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false); // For password modal
-  const [password, setPassword] = useState(""); // To hold the password input
-  const [authenticated, setAuthenticated] = useState(false); // To track authentication status
 
-  // Load data from local storage on initial render
   useEffect(() => {
     const savedName = localStorage.getItem("name");
     const savedHospitalNo = localStorage.getItem("hospitalNo");
@@ -35,14 +30,12 @@ export default function Index() {
     if (savedTestStartTime) setTestStartTime(savedTestStartTime);
   }, []);
 
-  // Autosave data to local storage
   useEffect(() => {
     localStorage.setItem("name", name);
     localStorage.setItem("hospitalNo", hospitalNo);
     localStorage.setItem("testStartTime", testStartTime);
   }, [name, hospitalNo, testStartTime]);
 
-  // Calculate the test end time by adding 24 hours to the start time
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
     const endDate = new Date(startDate);
@@ -50,7 +43,6 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  // Check if test has ended
   const checkTestEnd = () => {
     const endTime = calculateTestEndTime(testStartTime);
     const currentTime = new Date().toISOString().slice(0, 16);
@@ -96,7 +88,7 @@ export default function Index() {
         }
         return null;
       })
-      .filter(Boolean); // Remove empty rows
+      .filter(Boolean);
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
@@ -108,7 +100,7 @@ export default function Index() {
     set(newEntryRef, dataToSave)
       .then(() => {
         Alert.alert("Success", "Data saved successfully!");
-        setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
+        setRows([{ action: "", symptom: "", comment: "" }]);
       })
       .catch((error) => {
         Alert.alert("Error", "Failed to save data.");
@@ -118,48 +110,13 @@ export default function Index() {
 
   const toggleComments = () => {
     setShowComments((prev) => !prev);
-    setMenuVisible(false); // Close the menu after toggling comments
+    setMenuVisible(false);
   };
 
   const toggleMenu = () => setMenuVisible(!menuVisible);
 
-  const handleAuthentication = () => {
-    if (password === "securepassword123") {
-      setAuthenticated(true);
-      setModalVisible(false);
-      Alert.alert("Success", "Authentication successful!");
-    } else {
-      Alert.alert("Error", "Incorrect password. Please try again.");
-    }
-  };
-
   return (
     <View style={{ flex: 1 }}>
-      {/* Password Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enter Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Password"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity style={styles.modalButton} onPress={handleAuthentication}>
-              <Text style={styles.modalButtonText}>Submit</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Header Inputs */}
       <View style={styles.headerContainer}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Name:</Text>
@@ -168,7 +125,7 @@ export default function Index() {
             style={styles.headerInput}
             value={name}
             onChangeText={setName}
-            editable // Always editable
+            editable
           />
         </View>
         <View style={styles.inputGroup}>
@@ -178,12 +135,10 @@ export default function Index() {
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
-            editable // Always editable
+            editable
           />
         </View>
       </View>
-
-      {/* Test Start Time */}
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
         <input
@@ -191,25 +146,22 @@ export default function Index() {
           style={styles.inputit}
           value={testStartTime}
           onChange={(e) => setTestStartTime(e.target.value)}
-          disabled={false} // Always editable
+          disabled={false}
         />
       </Text>
-
-      {/* Test End Time */}
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
-          {testEnded ? "Test has ended. You cannot add another entry." : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
+          {testEnded
+            ? "Test has ended. You cannot add another entry."
+            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
-
-      {/* Table */}
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
             <Text style={styles.headerText}>Activity</Text>
             <Text style={styles.headerText}>Symptom</Text>
           </View>
-
           {rows.map((row, index) => (
             <View key={index} style={styles.tableRow}>
               <View style={styles.rowTop}>
@@ -224,7 +176,7 @@ export default function Index() {
                     updatedRows[index].action = text;
                     setRows(updatedRows);
                   }}
-                  editable={!testEnded} // Disable input if test has ended
+                  editable={!testEnded}
                 />
                 <TextInput
                   placeholder="What are you feeling?"
@@ -237,7 +189,7 @@ export default function Index() {
                     updatedRows[index].symptom = text;
                     setRows(updatedRows);
                   }}
-                  editable={!testEnded} // Disable input if test has ended
+                  editable={!testEnded}
                 />
               </View>
               {showComments && (
@@ -252,27 +204,35 @@ export default function Index() {
                     updatedRows[index].comment = text;
                     setRows(updatedRows);
                   }}
-                  editable={!testEnded} // Disable input if test has ended
+                  editable={!testEnded}
                 />
               )}
             </View>
           ))}
         </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData} disabled={testEnded}>
+        <TouchableOpacity
+          style={styles.fakeSubButton}
+          onPress={saveData}
+          disabled={testEnded}
+        >
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
-
-        {/* Options Menu */}
         {menuVisible && (
-          <View style={styles.optionsMenu}>
-            <TouchableOpacity style={styles.fakeSubButton} onPress={toggleComments}>
-              <Text style={styles.addButtonText}>
-                {showComments ? "Hide Comments" : "Show Comments"}
+          <View style={styles.menu}>
+            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
+              <Text style={styles.menuItemText}>
+                {showComments ? "Hide Comments" : "Add Comments"}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
+              <Text style={styles.menuItemText}>Close Menu</Text>
+            </TouchableOpacity>
           </View>
+        )}
+        {!menuVisible && (
+          <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
+            <Text style={styles.toggleButtonText}>Options</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </View>
@@ -280,193 +240,131 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  // Modal styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    width: "80%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
-  modalButton: {
-    backgroundColor: "#007AFF",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  modalButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  teStTi: {
-    alignSelf: "center",
-    width: "auto",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    marginBottom: 20,
-  },
-  inputit: {
-    fontFamily: "Arial, sans-serif",
-    outline: "none",
-    color: "#333",
-    width: "auto",
-    alignSelf: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    padding: 10,
-    boxSizing: "border-box",
-  },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    margin: 20,
+    marginTop: 20,
+    marginBottom: 10,
   },
   inputGroup: {
     flex: 1,
-    marginHorizontal: 10,
-    marginBottom: 10,
+    marginHorizontal: 5,
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: "bold",
+  },
+  headerInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 5,
   },
   labelTi: {
     fontSize: 16,
-    marginBottom: 5,
-    alignSelf: "center",
-  },
-  headerInput: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  tableContainer: {
-    marginLeft: 20,
-    marginRight: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#007AFF",
-    padding: 10,
-  },
-  headerText: {
-    color: "#fff",
     fontWeight: "bold",
+    marginTop: 20,
+  },
+  teStTi: {
     fontSize: 16,
-    textAlign: "center",
-    flex: 1,
-  },
-  tableRow: {
-    marginBottom: 10,
-  },
-  rowTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-  },
-  input: {
-    width: "48%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  commentInput: {
-    marginHorizontal: 10,
     marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  toggleButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    margin: 15,
-    borderRadius: 6,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  toggleButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  fakeSubButton: {
-    backgroundColor: "#00FF7A",
-    paddingTop: 10,
-    paddingBottom: 10,
-    margin: 15,
-    borderRadius: 6,
-    width: "95%",
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  menu: {
-    backgroundColor: "#f9f9f9",
-    margin: 15,
-    padding: 10,
-    borderRadius: 6,
-  },
-  menuItem: {
-    padding: 10,
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: "#007AFF",
-  },
-  testEndTime: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
   },
   testEnded: {
     color: "red",
     fontSize: 16,
+    marginTop: 10,
+  },
+  testEndTime: {
+    fontSize: 16,
+    marginTop: 10,
+  },
+  scrollContainer: {
+    flex: 1,
+    marginBottom: 20,
+  },
+  tableContainer: {
+    marginBottom: 20,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "#f1f1f1",
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  headerText: {
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
+  },
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  rowTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+  },
+  commentInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginTop: 10,
+  },
+  fakeSubButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center",
+  },
+  addButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  menu: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    position: "absolute",
+    top: 40,
+    right: 10,
+  },
+  menuItem: {
+    paddingVertical: 10,
+  },
+  menuItemText: {
+    fontSize: 16,
+  },
+  toggleButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  toggleButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
