@@ -154,16 +154,20 @@ export default function Index() {
 
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
-        <input
-          type="datetime-local"
-          style={styles.inputit}
-          value={testStartTime}
-          onChange={(e) => setTestStartTime(e.target.value)}
-          disabled={false}
-          onFocus={() => {
-            if (!passwordCorrect) setModalVisible(true);
-          }}
-        />
+<input
+  type="datetime-local"
+  style={styles.inputit}
+  value={testStartTime}
+  onChange={(e) => {
+    setTestStartTime(e.target.value);
+    setPasswordCorrect(false); // Reset password validation
+  }}
+  disabled={false}
+  onFocus={() => {
+    if (!passwordCorrect) setModalVisible(true);
+  }}
+/>
+
       </Text>
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
