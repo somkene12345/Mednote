@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
 } from "react-native";
 import { ref, set } from "firebase/database";
 import { database } from "../firebaseConfig";
@@ -16,9 +17,9 @@ export default function Index() {
   const [name, setName] = useState("");
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
-  const [showComments, setShowComments] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [testEnded, setTestEnded] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [isEditable, setIsEditable] = useState(false);
 
   // Load data from local storage on initial render
   useEffect(() => {
@@ -38,7 +39,17 @@ export default function Index() {
     localStorage.setItem("testStartTime", testStartTime);
   }, [name, hospitalNo, testStartTime]);
 
-  // Calculate the test end time by adding 24 hours to the start time
+  const verifyPassword = () => {
+    if (passwordInput === "hellouzoma") {
+      setIsEditable(true);
+      setPasswordModalVisible(false);
+      setPasswordInput("");
+    } else {
+      Alert.alert("Error", "Incorrect password. Please try again.");
+      setPasswordInput("");
+    }
+  };
+
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
     const endDate = new Date(startDate);
@@ -46,27 +57,7 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  // Check if test has ended
-  const checkTestEnd = () => {
-    const endTime = calculateTestEndTime(testStartTime);
-    const currentTime = new Date().toISOString().slice(0, 16);
-    if (currentTime >= endTime) {
-      setTestEnded(true);
-    }
-  };
-
-  useEffect(() => {
-    if (testStartTime) {
-      checkTestEnd();
-    }
-  }, [testStartTime]);
-
   const saveData = () => {
-    if (testEnded) {
-      Alert.alert("Test Ended", "You cannot submit data. The test has ended.");
-      return;
-    }
-
     if (!name.trim() || !hospitalNo.trim() || !testStartTime.trim()) {
       Alert.alert("Error", "Please provide a name, hospital number, and test start time.");
       return;
@@ -92,7 +83,7 @@ export default function Index() {
         }
         return null;
       })
-      .filter(Boolean); // Remove empty rows
+      .filter(Boolean);
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
@@ -104,7 +95,7 @@ export default function Index() {
     set(newEntryRef, dataToSave)
       .then(() => {
         Alert.alert("Success", "Data saved successfully!");
-        setRows([{ action: "", symptom: "", comment: "" }]); // Reset rows after saving
+        setRows([{ action: "", symptom: "", comment: "" }]);
       })
       .catch((error) => {
         Alert.alert("Error", "Failed to save data.");
@@ -112,16 +103,8 @@ export default function Index() {
       });
   };
 
-  const toggleComments = () => {
-    setShowComments((prev) => !prev);
-    setMenuVisible(false); // Close the menu after toggling comments
-  };
-
-  const toggleMenu = () => setMenuVisible(!menuVisible);
-
   return (
     <View style={{ flex: 1 }}>
-      {/* Header Inputs */}
       <View style={styles.headerContainer}>
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Name:</Text>
@@ -130,7 +113,7 @@ export default function Index() {
             style={styles.headerInput}
             value={name}
             onChangeText={setName}
-            editable // Always editable
+            editable
           />
         </View>
         <View style={styles.inputGroup}>
@@ -140,12 +123,11 @@ export default function Index() {
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
-            editable // Always editable
+            editable
           />
         </View>
       </View>
 
-      {/* Test Start Time */}
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
         <input
@@ -153,105 +135,120 @@ export default function Index() {
           style={styles.inputit}
           value={testStartTime}
           onChange={(e) => setTestStartTime(e.target.value)}
-          disabled={false} // Always editable
+          disabled={!isEditable}
         />
       </Text>
+      <TouchableOpacity
+        style={styles.lockButton}
+        onPress={() => setPasswordModalVisible(true)}
+      >
+        <Text style={styles.lockButtonText}>Unlock Editing</Text>
+      </TouchableOpacity>
 
-      {/* Test End Time */}
-      {testStartTime && (
-        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
-          {testEnded ? "Test has ended. You cannot add another entry." : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
-        </Text>
-      )}
-
-      {/* Table */}
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.headerText}>Activity</Text>
-            <Text style={styles.headerText}>Symptom</Text>
-          </View>
-
-          {rows.map((row, index) => (
-            <View key={index} style={styles.tableRow}>
-              <View style={styles.rowTop}>
-                <TextInput
-                  placeholder="What are you doing?"
-                  style={styles.input}
-                  value={row.action}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].action = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-                <TextInput
-                  placeholder="What are you feeling?"
-                  style={styles.input}
-                  value={row.symptom}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].symptom = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-              </View>
-              {showComments && (
-                <TextInput
-                  placeholder="Add a comment"
-                  style={styles.commentInput}
-                  value={row.comment}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].comment = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded} // Disable input if test has ended
-                />
-              )}
+      <Modal visible={passwordModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter Password</Text>
+            <TextInput
+              placeholder="Password"
+              secureTextEntry
+              style={styles.passwordInput}
+              value={passwordInput}
+              onChangeText={setPasswordInput}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.verifyButton} onPress={verifyPassword}>
+                <Text style={styles.verifyButtonText}>Verify</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setPasswordModalVisible(false);
+                  setPasswordInput("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
-          ))}
-        </View>
-
-        {/* Submit Button */}
-        <TouchableOpacity style={styles.fakeSubButton} onPress={saveData} disabled={testEnded}>
-          <Text style={styles.addButtonText}>Submit</Text>
-        </TouchableOpacity>
-
-        {/* Options Menu */}
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-              <Text style={styles.menuItemText}>
-                {showComments ? "Hide Comments" : "Add Comments"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
-              <Text style={styles.menuItemText}>Close Menu</Text>
-            </TouchableOpacity>
           </View>
-        )}
-
-        {/* Toggle Button to show options menu */}
-        {!menuVisible && (
-          <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
-            <Text style={styles.toggleButtonText}>Options</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  passwordInput: {
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  verifyButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  verifyButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#f44336",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 10,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  lockButton: {
+    alignSelf: "center",
+    backgroundColor: "#FFA500",
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  lockButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   teStTi: {
     alignSelf: "center",
     width: "auto",
