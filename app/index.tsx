@@ -158,6 +158,8 @@ export default function Index() {
   type="datetime-local"
   style={styles.inputit}
   value={testStartTime}
+    secureTextEntry
+  autoComplete="off"
   onChange={(e) => {
     setTestStartTime(e.target.value);
     setPasswordCorrect(false); // Reset password validation
