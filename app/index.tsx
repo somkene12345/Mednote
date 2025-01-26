@@ -463,7 +463,7 @@ modalContainer: {
     borderRadius: 5,
   },
   modalButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#00FF7A",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
