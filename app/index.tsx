@@ -46,26 +46,19 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-const checkTestEnd = () => {
-  if (!testStartTime) return;
+  const checkTestEnd = () => {
+    const endTime = calculateTestEndTime(testStartTime);
+    const currentTime = new Date().toISOString().slice(0, 16);
+    if (currentTime >= endTime) {
+      setTestEnded(true);
+    }
+  };
 
-  const endTime = new Date(calculateTestEndTime(testStartTime)).getTime();
-  const currentTime = new Date().getTime(); // Current timestamp
-
-  if (currentTime >= endTime) {
-    setTestEnded(true);
-  }
-};
-
-
-useEffect(() => {
-  if (testStartTime) {
-    checkTestEnd();
-    setPasswordCorrect(false); // Reset password validation when TST changes
-    setTestEnded(false); // Reset testEnded state so new test can start
-  }
-}, [testStartTime]);
-
+  useEffect(() => {
+    if (testStartTime) {
+      checkTestEnd();
+    }
+  }, [testStartTime]);
 
   const saveData = () => {
     if (testEnded) {
@@ -165,24 +158,18 @@ useEffect(() => {
   type="datetime-local"
   style={styles.inputit}
   value={testStartTime}
+    secureTextEntry
   autoComplete="off"
   onChange={(e) => {
-    const newStartTime = e.target.value;
-    setTestStartTime(newStartTime);
-
-    // Automatically update test end time status
-    const endTime = calculateTestEndTime(newStartTime);
-    const currentTime = new Date().toISOString().slice(0, 16);
-    setTestEnded(currentTime >= endTime);
-
-    // Reset password validation when test time changes
-    setPasswordCorrect(false);
+    setTestStartTime(e.target.value);
+    setPasswordCorrect(false); // Reset password validation
   }}
   disabled={false}
   onFocus={() => {
     if (!passwordCorrect) setModalVisible(true);
   }}
 />
+
       </Text>
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
