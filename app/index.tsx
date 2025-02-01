@@ -54,11 +54,14 @@ export default function Index() {
     }
   };
 
-  useEffect(() => {
-    if (testStartTime) {
-      checkTestEnd();
-    }
-  }, [testStartTime]);
+useEffect(() => {
+  if (testStartTime) {
+    checkTestEnd();
+    setPasswordCorrect(false); // Reset password validation when TST changes
+    setTestEnded(false); // Reset testEnded state so new test can start
+  }
+}, [testStartTime]);
+
 
   const saveData = () => {
     if (testEnded) {
