@@ -46,13 +46,17 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  const checkTestEnd = () => {
-    const endTime = calculateTestEndTime(testStartTime);
-    const currentTime = new Date().toISOString().slice(0, 16);
-    if (currentTime >= endTime) {
-      setTestEnded(true);
-    }
-  };
+const checkTestEnd = () => {
+  if (!testStartTime) return;
+
+  const endTime = new Date(calculateTestEndTime(testStartTime)).getTime();
+  const currentTime = new Date().getTime(); // Current timestamp
+
+  if (currentTime >= endTime) {
+    setTestEnded(true);
+  }
+};
+
 
 useEffect(() => {
   if (testStartTime) {
