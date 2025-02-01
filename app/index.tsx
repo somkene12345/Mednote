@@ -161,18 +161,24 @@ useEffect(() => {
   type="datetime-local"
   style={styles.inputit}
   value={testStartTime}
-    secureTextEntry
   autoComplete="off"
   onChange={(e) => {
-    setTestStartTime(e.target.value);
-    setPasswordCorrect(false); // Reset password validation
+    const newStartTime = e.target.value;
+    setTestStartTime(newStartTime);
+
+    // Automatically update test end time status
+    const endTime = calculateTestEndTime(newStartTime);
+    const currentTime = new Date().toISOString().slice(0, 16);
+    setTestEnded(currentTime >= endTime);
+
+    // Reset password validation when test time changes
+    setPasswordCorrect(false);
   }}
   disabled={false}
   onFocus={() => {
     if (!passwordCorrect) setModalVisible(true);
   }}
 />
-
       </Text>
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
