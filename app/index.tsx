@@ -79,7 +79,7 @@ useEffect(() => {
       return;
     }
 
-    const groupKey = ${name}-${hospitalNo};
+    const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
 const adjustedTestStartTime = new Date(testStartTime);
