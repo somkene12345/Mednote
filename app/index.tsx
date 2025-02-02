@@ -46,26 +46,23 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-const checkTestEnd = () => {
-  if (!testStartTime) return;
+  const checkTestEnd = () => {
+    if (!testStartTime) return;
 
-  const startTime = new Date(testStartTime);
-  const currentTime = new Date();
-  const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
+    const startTime = new Date(testStartTime);
+    const currentTime = new Date();
+    const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
 
-  if (minutesDifference >= 1440) {
-    setTestEnded(true);
-  } else {
-    setTestEnded(false); // Reset if within the valid time frame
-  }
-};
+    if (minutesDifference >= 1440) {
+      setTestEnded(true);
+    } else {
+      setTestEnded(false); // Reset if within the valid time frame
+    }
+  };
 
-
-
-useEffect(() => {
-  checkTestEnd();
-}, [testStartTime]);
-
+  useEffect(() => {
+    checkTestEnd();
+  }, [testStartTime]);
 
   const saveData = () => {
     if (testEnded) {
@@ -81,29 +78,28 @@ useEffect(() => {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-const adjustedTestStartTime = new Date(testStartTime);
-adjustedTestStartTime.setMinutes(adjustedTestStartTime.getMinutes() - adjustedTestStartTime.getTimezoneOffset());
+    // Convert test start time to local time and adjust for timezone offset
+    const adjustedTestStartTime = new Date(testStartTime);
+    adjustedTestStartTime.setMinutes(adjustedTestStartTime.getMinutes() - adjustedTestStartTime.getTimezoneOffset());
 
-const dataToSave = rows
-  .map((row) => {
-    if (row.action.trim() && row.symptom.trim()) {
-      const startDate = new Date(adjustedTestStartTime);
-      const endDate = new Date(startDate);
-      endDate.setMinutes(startDate.getMinutes() + 1440); // 1440 minutes = 24 hours
+    const dataToSave = rows
+      .map((row) => {
+        if (row.action.trim() && row.symptom.trim()) {
+          const startDate = new Date(adjustedTestStartTime);
+          const endDate = new Date(startDate);
+          endDate.setMinutes(startDate.getMinutes() + 1440); // 1440 minutes = 24 hours
 
-      return {
-        Activity: row.action,
-        Symptom: row.symptom,
-        Comment: row.comment,
-        TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
-        TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
-      };
-    }
-    return null;
-  })
-  .filter(Boolean);
-
-
+          return {
+            Activity: row.action,
+            Symptom: row.symptom,
+            Comment: row.comment,
+            TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
+            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
@@ -166,26 +162,23 @@ const dataToSave = rows
 
       <Text style={styles.labelTi}>Test Start Time:</Text>
       <Text style={styles.teStTi}>
-<input
-  type="datetime-local"
-  style={styles.inputit}
-  value={testStartTime}
-    secureTextEntry
-  autoComplete="off"
-onChange={(e) => {
-  const adjustedTime = new Date(e.target.value);
-  adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour
-  setTestStartTime(adjustedTime.toISOString().slice(0, 16));
-  setPasswordCorrect(false); // Reset password validation
-}}
-
-  disabled={false}
-  onFocus={() => {
-    if (!passwordCorrect) setModalVisible(true);
-  }}
-/>
-
+        <input
+          type="datetime-local"
+          style={styles.inputit}
+          value={testStartTime}
+          onChange={(e) => {
+            const adjustedTime = new Date(e.target.value);
+            adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour for timezone adjustment
+            setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+            setPasswordCorrect(false); // Reset password validation
+          }}
+          disabled={false}
+          onFocus={() => {
+            if (!passwordCorrect) setModalVisible(true);
+          }}
+        />
       </Text>
+
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
           {testEnded
@@ -248,6 +241,7 @@ onChange={(e) => {
             </View>
           ))}
         </View>
+
         <TouchableOpacity
           style={styles.fakeSubButton}
           onPress={saveData}
@@ -255,6 +249,7 @@ onChange={(e) => {
         >
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
+
         {menuVisible && (
           <View style={styles.menu}>
             <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
@@ -267,6 +262,7 @@ onChange={(e) => {
             </TouchableOpacity>
           </View>
         )}
+
         {!menuVisible && (
           <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
             <Text style={styles.toggleButtonText}>Options</Text>
@@ -275,38 +271,38 @@ onChange={(e) => {
       </ScrollView>
 
       {/* Password Modal */}
-{modalVisible && (
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalHeader}>Enter Password</Text>
-      <TextInput
-        style={styles.modalInput}
-        placeholder="Enter your password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity
-        style={styles.modalButton}
-        onPress={handlePasswordSubmit}
-      >
-        <Text style={styles.modalButtonText}>Submit</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.modalButton, { backgroundColor: 'red' }]}
-        onPress={() => setModalVisible(false)}
-      >
-        <Text style={styles.modalButtonText}>Close</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-)}
+      {modalVisible && (
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>Enter Password</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handlePasswordSubmit}
+            >
+              <Text style={styles.modalButtonText}>Submit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: 'red' }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-   teStTi: {
+  teStTi: {
     alignSelf: "center",
     width: "auto",
     borderWidth: 1,
@@ -392,74 +388,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 6,
-    padding: 10,
+    padding: 8,
     backgroundColor: "#fff",
+    fontSize: 14,
   },
   commentInput: {
-    marginHorizontal: 10,
-    marginTop: 10,
+    width: "98%",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 6,
     padding: 10,
     backgroundColor: "#fff",
+    fontSize: 14,
+    marginVertical: 5,
   },
-  toggleButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    margin: 15,
-    borderRadius: 6,
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  toggleButtonText: {
-    color: "#fff",
+  testEnded: {
+    color: "red",
     fontWeight: "bold",
-    fontSize: 16,
+    textAlign: "center",
+    marginTop: 10,
   },
   fakeSubButton: {
-    backgroundColor: "#00FF7A",
-    paddingTop: 10,
-    paddingBottom: 10,
-    margin: 15,
-    borderRadius: 6,
-    width: "95%",
-    alignItems: "center",
-    alignSelf: "center",
+    backgroundColor: "#007AFF",
+    paddingVertical: 10,
+    margin: 20,
+    borderRadius: 5,
+    textAlign: "center",
   },
   addButtonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
-  },
-  menu: {
-    backgroundColor: "#f9f9f9",
-    margin: 15,
-    padding: 10,
-    borderRadius: 6,
-  },
-  menuItem: {
-    padding: 10,
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: "#007AFF",
-  },
-  testEndTime: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
     textAlign: "center",
   },
-  testEnded: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-modalContainer: {
+  modalContainer: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -470,34 +431,35 @@ modalContainer: {
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 8,
     width: "80%",
-    alignItems: "center",
   },
   modalHeader: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 20,
+    textAlign: "center",
   },
   modalInput: {
+    width: "100%",
     borderWidth: 1,
     borderColor: "#ccc",
-    width: "100%",
     padding: 10,
+    borderRadius: 6,
     marginBottom: 20,
-    borderRadius: 5,
   },
   modalButton: {
-    backgroundColor: "#00FF7A",
+    backgroundColor: "#007AFF",
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 5,
-    margin: 10,
+    marginTop: 10,
+    textAlign: "center",
   },
   modalButtonText: {
-    color: "white",
-    fontSize: 16,
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
