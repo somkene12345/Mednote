@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -35,8 +35,6 @@ export default function SearchPatientNotes() {
 
   // Function to handle search logic
   const handleSearch = async () => {
-    if (searchQuery.trim() === "") return;
-
     setLoading(true);
 
     try {
@@ -118,6 +116,64 @@ export default function SearchPatientNotes() {
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "alphabetical" ? "recent" : "alphabetical"));
   };
+
+  useEffect(() => {
+    // Fetch all patients initially and sort them alphabetically
+    const fetchPatients = async () => {
+      setLoading(true);
+      try {
+        const snapshot = await get(ref(database, "entries/"));
+        const data = snapshot.val();
+
+        if (!data) {
+          setPatients([]);
+          return;
+        }
+
+        const allPatients = Object.keys(data).map((patientKey) => {
+          const patientData = data[patientKey];
+          const testDetails = patientData.TestDetails || {};
+
+          // Group entries by TestStartTime
+          const groupedEntries = Object.keys(patientData)
+            .filter((key) => key !== "TestDetails" && key !== "key")
+            .map((timestamp) => ({
+              timestamp,
+              ...patientData[timestamp]["0"], // Accessing data under "0"
+            }))
+            .reduce((groups, entry) => {
+              const startTime = entry.TestStartTime;
+              if (!groups[startTime]) {
+                groups[startTime] = [];
+              }
+              groups[startTime].push(entry);
+              return groups;
+            }, {});
+
+          // Convert grouped entries into a format for SectionList
+          const sections = Object.keys(groupedEntries).map((startTime) => ({
+            title: startTime,
+            data: groupedEntries[startTime],
+          }));
+
+          return {
+            key: patientKey,
+            testDetails,
+            sections, // Grouped entries by TestStartTime
+          };
+        });
+
+        allPatients.sort((a, b) => a.key.localeCompare(b.key)); // Alphabetical sort by default
+        setPatients(allPatients);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   if (!authenticated) {
     return (
