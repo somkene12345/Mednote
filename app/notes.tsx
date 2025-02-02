@@ -230,7 +230,7 @@ export default function SearchPatientNotes() {
                   )}
 
                   <SectionList
-                    sections={item.sections.reverse()} {/* Reverse the sections for most recent first */}
+                    sections={item.sections.reverse()} // Reverse the sections for most recent first
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => {
                       // Convert TestStartTime (with space instead of 'T') to Date object
