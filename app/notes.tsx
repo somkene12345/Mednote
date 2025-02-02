@@ -270,6 +270,7 @@ export default function SearchPatientNotes() {
   );
 }
 
+
 const styles = StyleSheet.create({
   testDetailsContainer: {
     marginBottom: 10,
@@ -332,6 +333,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#f8f8f8",
   },
   input: {
     height: 40,
@@ -344,24 +346,27 @@ const styles = StyleSheet.create({
   },
   patientContainer: {
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: "#fff",
   },
   patientName: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#007AFF",
-    marginBottom: 10,
   },
   noteContainer: {
-    marginBottom: 10,
-    backgroundColor: "#f9f9f9",
+    marginTop: 10,
     padding: 10,
+    backgroundColor: "#f9f9f9",
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#ddd",
   },
   noteDate: {
     fontSize: 14,
-    color: "#555",
+    color: "#888",
     marginBottom: 5,
   },
   note: {
