@@ -169,9 +169,35 @@ export default function SearchPatientNotes() {
     const hasEnded = new Date() > endTime;
 
     // Format the date to only include up to the minute (YYYY-MM-DD HH:mm)
-    const formatDate = (date: Date) => {
-      return date.toISOString().slice(0, 16).replace("T", " "); // "2025-01-25 14:00"
-    };
+// Modify formatDate to show the time in local timezone
+const formatDate = (date: Date) => {
+  // Using toLocaleString to display in local timezone
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+<SectionList
+  sections={item.sections}
+  keyExtractor={(entry, index) => entry.timestamp + index}
+  renderSectionHeader={({ section: { title } }) => {
+    // Convert TestStartTime (with space instead of 'T') to Date object
+    const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
+
+    // Add 25 hours to the TestStartTime and round to the nearest minute
+    const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
+
+    // Round endTime to nearest minute by resetting seconds and milliseconds
+    endTime.setSeconds(0);
+    endTime.setMilliseconds(0);
+
+    // Determine if the test has ended (current time is after TestEndTime)
+    const hasEnded = new Date() > endTime;
 
     return (
       <View style={styles.sectionHeader}>
@@ -198,6 +224,7 @@ export default function SearchPatientNotes() {
     </View>
   )}
 />
+
 
 
                 </View>
