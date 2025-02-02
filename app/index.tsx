@@ -46,19 +46,24 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  const checkTestEnd = () => {
-    const endTime = calculateTestEndTime(testStartTime);
-    const currentTime = new Date().toISOString().slice(0, 16);
-    if (currentTime >= endTime) {
-      setTestEnded(true);
-    }
-  };
+const checkTestEnd = () => {
+  if (!testStartTime) return;
 
-  useEffect(() => {
-    if (testStartTime) {
-      checkTestEnd();
-    }
-  }, [testStartTime]);
+  const endTime = calculateTestEndTime(testStartTime);
+  const currentTime = new Date().toISOString().slice(0, 16);
+
+  if (currentTime >= endTime) {
+    setTestEnded(true);
+  } else {
+    setTestEnded(false);  // Reset testEnded if it's within the valid range
+  }
+};
+
+
+useEffect(() => {
+  checkTestEnd();
+}, [testStartTime]);
+
 
   const saveData = () => {
     if (testEnded) {
@@ -74,24 +79,28 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    const dataToSave = rows
-      .map((row) => {
-        if (row.action.trim() && row.symptom.trim()) {
-          const startDate = new Date(testStartTime);
-          const endDate = new Date(startDate);
-          endDate.setHours(startDate.getHours() + 25);
+const adjustedTestStartTime = new Date(testStartTime);
+adjustedTestStartTime.setHours(adjustedTestStartTime.getHours() + 1);
 
-          return {
-            Activity: row.action,
-            Symptom: row.symptom,
-            Comment: row.comment,
-            TestStartTime: testStartTime.slice(0, 16).replace("T", " "),
-            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+const dataToSave = rows
+  .map((row) => {
+    if (row.action.trim() && row.symptom.trim()) {
+      const startDate = new Date(adjustedTestStartTime);
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 25);
+
+      return {
+        Activity: row.action,
+        Symptom: row.symptom,
+        Comment: row.comment,
+        TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
+        TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+      };
+    }
+    return null;
+  })
+  .filter(Boolean);
+
 
     if (dataToSave.length === 0) {
       Alert.alert("Error", "Please complete the rows before submitting.");
@@ -160,10 +169,13 @@ export default function Index() {
   value={testStartTime}
     secureTextEntry
   autoComplete="off"
-  onChange={(e) => {
-    setTestStartTime(e.target.value);
-    setPasswordCorrect(false); // Reset password validation
-  }}
+onChange={(e) => {
+  const adjustedTime = new Date(e.target.value);
+  adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour
+  setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+  setPasswordCorrect(false); // Reset password validation
+}}
+
   disabled={false}
   onFocus={() => {
     if (!passwordCorrect) setModalVisible(true);
