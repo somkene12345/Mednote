@@ -46,19 +46,27 @@ export default function Index() {
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
-  const checkTestEnd = () => {
-    const endTime = calculateTestEndTime(testStartTime);
-    const currentTime = new Date().toISOString().slice(0, 16);
-    if (currentTime >= endTime) {
-      setTestEnded(true);
-    }
-  };
+const checkTestEnd = () => {
+  if (!testStartTime) return;
 
-  useEffect(() => {
-    if (testStartTime) {
-      checkTestEnd();
-    }
-  }, [testStartTime]);
+  const startTime = new Date(testStartTime); // Convert test start time to Date
+  const currentTime = new Date(); // Get current time
+  const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
+
+  if (minutesDifference >= 1440) {
+    setTestEnded(true);
+  } else {
+    setTestEnded(false); // Reset if within the valid time frame
+  }
+};
+
+
+
+
+useEffect(() => {
+  checkTestEnd();
+}, [testStartTime]);
+
 
   const saveData = () => {
     if (testEnded) {
@@ -75,14 +83,14 @@ export default function Index() {
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
 const adjustedTestStartTime = new Date(testStartTime);
-adjustedTestStartTime.setHours(adjustedTestStartTime.getHours() + 1);
+adjustedTestStartTime.setMinutes(adjustedTestStartTime.getMinutes() - adjustedTestStartTime.getTimezoneOffset());
 
 const dataToSave = rows
   .map((row) => {
     if (row.action.trim() && row.symptom.trim()) {
       const startDate = new Date(adjustedTestStartTime);
       const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 25);
+      endDate.setMinutes(startDate.getMinutes() + 1440); // 1440 minutes = 24 hours
 
       return {
         Activity: row.action,
@@ -95,6 +103,7 @@ const dataToSave = rows
     return null;
   })
   .filter(Boolean);
+
 
 
     if (dataToSave.length === 0) {
