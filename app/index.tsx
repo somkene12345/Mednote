@@ -111,7 +111,7 @@ const dataToSave = rows
       return;
     }
 
-    const newEntryRef = ref(database, entries/${groupKey}/${timestamp});
+const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
 
     set(newEntryRef, dataToSave)
       .then(() => {
