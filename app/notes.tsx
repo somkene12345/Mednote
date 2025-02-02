@@ -21,7 +21,6 @@ export default function SearchPatientNotes() {
   const [authenticated, setAuthenticated] = useState(false); // Authentication state
   const [password, setPassword] = useState(""); // Password input state
   const correctPassword = "hellouzoma"; // Correct password
-  const [sortOrder, setSortOrder] = useState("alphabetical"); // Sort order state
 
   // Handle password submission
   const handlePasswordSubmit = () => {
@@ -83,17 +82,6 @@ export default function SearchPatientNotes() {
         };
       });
 
-      // Sorting by most recent test start time (descending)
-      if (sortOrder === "recent") {
-        resultPatients.sort((a, b) => {
-          const aStartTime = new Date(a.testDetails.TestStartTime);
-          const bStartTime = new Date(b.testDetails.TestStartTime);
-          return bStartTime.getTime() - aStartTime.getTime();
-        });
-      } else {
-        resultPatients.sort((a, b) => a.key.localeCompare(b.key)); // Alphabetical sort
-      }
-
       setPatients(resultPatients);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -112,13 +100,8 @@ export default function SearchPatientNotes() {
     setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
   };
 
-  // Toggle sorting order between alphabetical and most recent test entry
-  const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === "alphabetical" ? "recent" : "alphabetical"));
-  };
-
   useEffect(() => {
-    // Fetch all patients initially and sort them alphabetically
+    // Fetch all patients initially
     const fetchPatients = async () => {
       setLoading(true);
       try {
@@ -163,7 +146,6 @@ export default function SearchPatientNotes() {
           };
         });
 
-        allPatients.sort((a, b) => a.key.localeCompare(b.key)); // Alphabetical sort by default
         setPatients(allPatients);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -202,11 +184,6 @@ export default function SearchPatientNotes() {
         onChangeText={handleChange}
         onSubmitEditing={handleSearch}
       />
-      <TouchableOpacity style={styles.sortButton} onPress={toggleSortOrder}>
-        <Text style={styles.sortButtonText}>
-          {sortOrder === "alphabetical" ? "Sort by Most Recent" : "Sort Alphabetically"}
-        </Text>
-      </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -317,20 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  sortButton: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#007AFF",
-    borderRadius: 6,
-    alignItems: "center",
-    width: "80%",
-    alignSelf: "center",
-  },
-  sortButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
   authContainer: {
     flex: 1,
     justifyContent: "center",
@@ -369,7 +332,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f8f8f8",
   },
   input: {
     height: 40,
@@ -382,27 +344,24 @@ const styles = StyleSheet.create({
   },
   patientContainer: {
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
   },
   patientName: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 10,
   },
   noteContainer: {
-    marginTop: 10,
-    padding: 10,
+    marginBottom: 10,
     backgroundColor: "#f9f9f9",
+    padding: 10,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: "#ddd",
   },
   noteDate: {
     fontSize: 14,
-    color: "#888",
+    color: "#555",
     marginBottom: 5,
   },
   note: {
