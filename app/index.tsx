@@ -49,8 +49,8 @@ export default function Index() {
 const checkTestEnd = () => {
   if (!testStartTime) return;
 
-  const startTime = new Date(testStartTime); // Convert test start time to Date
-  const currentTime = new Date(); // Get current time
+  const startTime = new Date(testStartTime);
+  const currentTime = new Date();
   const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
 
   if (minutesDifference >= 1440) {
@@ -59,7 +59,6 @@ const checkTestEnd = () => {
     setTestEnded(false); // Reset if within the valid time frame
   }
 };
-
 
 
 
@@ -111,7 +110,7 @@ const dataToSave = rows
       return;
     }
 
-const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
+    const newEntryRef = ref(database, `entries/${groupKey}/${timestamp}`);
 
     set(newEntryRef, dataToSave)
       .then(() => {
@@ -191,7 +190,7 @@ onChange={(e) => {
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
           {testEnded
             ? "Test has ended. You cannot add another entry."
-            : Test ends by: ${calculateTestEndTime(testStartTime)}}
+            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
 
