@@ -230,7 +230,7 @@ export default function SearchPatientNotes() {
                   )}
 
                   <SectionList
-                    sections={item.sections}
+                    sections={item.sections.reverse()} {/* Reverse the sections for most recent first */}
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => {
                       // Convert TestStartTime (with space instead of 'T') to Date object
@@ -395,17 +395,18 @@ const styles = StyleSheet.create({
   noteContainer: {
     marginTop: 10,
     padding: 10,
-    borderRadius: 6,
     backgroundColor: "#f9f9f9",
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#ddd",
   },
   noteDate: {
     fontSize: 14,
     color: "#888",
+    marginBottom: 5,
   },
   note: {
     fontSize: 16,
-    marginTop: 5,
+    marginBottom: 5,
   },
 });
