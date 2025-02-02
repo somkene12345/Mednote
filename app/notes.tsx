@@ -21,6 +21,7 @@ export default function SearchPatientNotes() {
   const [authenticated, setAuthenticated] = useState(false); // Authentication state
   const [password, setPassword] = useState(""); // Password input state
   const correctPassword = "hellouzoma"; // Correct password
+  const [sortOrder, setSortOrder] = useState("alphabetical"); // Sort order state
 
   // Handle password submission
   const handlePasswordSubmit = () => {
@@ -84,6 +85,17 @@ export default function SearchPatientNotes() {
         };
       });
 
+      // Sorting by most recent test start time (descending)
+      if (sortOrder === "recent") {
+        resultPatients.sort((a, b) => {
+          const aStartTime = new Date(a.testDetails.TestStartTime);
+          const bStartTime = new Date(b.testDetails.TestStartTime);
+          return bStartTime.getTime() - aStartTime.getTime();
+        });
+      } else {
+        resultPatients.sort((a, b) => a.key.localeCompare(b.key)); // Alphabetical sort
+      }
+
       setPatients(resultPatients);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -100,6 +112,11 @@ export default function SearchPatientNotes() {
   // Toggle the display of patient details
   const togglePatientDetails = (patientKey: string) => {
     setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
+  };
+
+  // Toggle sorting order between alphabetical and most recent test entry
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "alphabetical" ? "recent" : "alphabetical"));
   };
 
   if (!authenticated) {
@@ -120,18 +137,6 @@ export default function SearchPatientNotes() {
     );
   }
 
-  // Function to format dates to local timezone
-  const formatDate = (date: Date) => {
-    return date.toLocaleString("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
-
   return (
     <View style={styles.container}>
       <TextInput
@@ -141,6 +146,11 @@ export default function SearchPatientNotes() {
         onChangeText={handleChange}
         onSubmitEditing={handleSearch}
       />
+      <TouchableOpacity style={styles.sortButton} onPress={toggleSortOrder}>
+        <Text style={styles.sortButtonText}>
+          {sortOrder === "alphabetical" ? "Sort by Most Recent" : "Sort Alphabetically"}
+        </Text>
+      </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -167,23 +177,41 @@ export default function SearchPatientNotes() {
                     sections={item.sections}
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => {
-                      const startTime = new Date(title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+                      // Convert TestStartTime (with space instead of 'T') to Date object
+                      const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
+
+                      // Add 25 hours to the TestStartTime and round to the nearest minute
+                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
+
+                      // Round endTime to nearest minute by resetting seconds and milliseconds
                       endTime.setSeconds(0);
                       endTime.setMilliseconds(0);
 
+                      // Determine if the test has ended (current time is after TestEndTime)
                       const hasEnded = new Date() > endTime;
+
+                      const formatDate = (date: Date) => {
+                        // Using toLocaleString to display in local timezone
+                        return date.toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: false,
+                        });
+                      };
 
                       return (
                         <View style={styles.sectionHeader}>
                           <Text style={styles.sectionHeaderText}>
-                            Test Start Time: {formatDate(startTime)}
+                            Test Start Time: {formatDate(startTime)} {/* Display Test Start Time */}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
-                            Test End Time: {formatDate(endTime)}
+                            Test End Time: {formatDate(endTime)} {/* Display the calculated Test End Time */}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
-                            {hasEnded ? "Test has ended" : "Test is ongoing"}
+                            {hasEnded ? "Test has ended" : "Test is ongoing"} {/* Display test status */}
                           </Text>
                         </View>
                       );
@@ -232,6 +260,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+  },
+  sortButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#007AFF",
+    borderRadius: 6,
+    alignItems: "center",
+    width: "80%",
+    alignSelf: "center",
+  },
+  sortButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   authContainer: {
     flex: 1,
