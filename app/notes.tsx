@@ -120,6 +120,18 @@ export default function SearchPatientNotes() {
     );
   }
 
+  // Function to format dates to local timezone
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -151,79 +163,47 @@ export default function SearchPatientNotes() {
                     </View>
                   )}
 
-<SectionList
-  sections={item.sections}
-  keyExtractor={(entry, index) => entry.timestamp + index}
-  renderSectionHeader={({ section: { title } }) => {
-    // Convert TestStartTime (with space instead of 'T') to Date object
-    const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
+                  <SectionList
+                    sections={item.sections}
+                    keyExtractor={(entry, index) => entry.timestamp + index}
+                    renderSectionHeader={({ section: { title } }) => {
+                      const startTime = new Date(title.replace(" ", "T"));
+                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+                      endTime.setSeconds(0);
+                      endTime.setMilliseconds(0);
 
-    // Add 25 hours to the TestStartTime and round to the nearest minute
-    const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
+                      const hasEnded = new Date() > endTime;
 
-    // Round endTime to nearest minute by resetting seconds and milliseconds
-    endTime.setSeconds(0);
-    endTime.setMilliseconds(0);
-
-    // Determine if the test has ended (current time is after TestEndTime)
-    const hasEnded = new Date() > endTime;
-
-// Modify formatDate to show the time in local timezone
-const formatDate = (date: Date) => {
-  // Using toLocaleString to display in local timezone
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
-};
-
-<SectionList
-  sections={item.sections}
-  keyExtractor={(entry, index) => entry.timestamp + index}
-  renderSectionHeader={({ section: { title } }) => {
-    // Convert TestStartTime (with space instead of 'T') to Date object
-    const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
-
-    // Add 25 hours to the TestStartTime and round to the nearest minute
-    const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
-
-    // Round endTime to nearest minute by resetting seconds and milliseconds
-    endTime.setSeconds(0);
-    endTime.setMilliseconds(0);
-
-    // Determine if the test has ended (current time is after TestEndTime)
-    const hasEnded = new Date() > endTime;
-
-    return (
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionHeaderText}>
-          Test Start Time: {formatDate(startTime)} {/* Display Test Start Time */}
-        </Text>
-        <Text style={styles.sectionHeaderText}>
-          Test End Time: {formatDate(endTime)} {/* Display the calculated Test End Time */}
-        </Text>
-        <Text style={styles.sectionHeaderText}>
-          {hasEnded ? "Test has ended" : "Test is ongoing"} {/* Display test status */}
-        </Text>
-      </View>
-    );
-  }}
-  renderItem={({ item }) => (
-    <View style={styles.noteContainer}>
-      <Text style={styles.noteDate}>{item.timestamp}</Text>
-      <Text style={styles.note}>Activity: {item.Activity}</Text>
-      <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-      {item.Comment && item.Comment.trim() !== "" && (
-        <Text style={styles.note}>Comments: {item.Comment}</Text>
-      )}
-    </View>
-  )}
-/>
-
+                      return (
+                        <View style={styles.sectionHeader}>
+                          <Text style={styles.sectionHeaderText}>
+                            Test Start Time: {formatDate(startTime)}
+                          </Text>
+                          <Text style={styles.sectionHeaderText}>
+                            Test End Time: {formatDate(endTime)}
+                          </Text>
+                          <Text style={styles.sectionHeaderText}>
+                            {hasEnded ? "Test has ended" : "Test is ongoing"}
+                          </Text>
+                        </View>
+                      );
+                    }}
+                    renderItem={({ item }) => (
+                      <View style={styles.noteContainer}>
+                        <Text style={styles.noteDate}>{item.timestamp}</Text>
+                        <Text style={styles.note}>Activity: {item.Activity}</Text>
+                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                        {item.Comment && item.Comment.trim() !== "" && (
+                          <Text style={styles.note}>Comments: {item.Comment}</Text>
+                        )}
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+          )}
+        />
       )}
     </View>
   );
