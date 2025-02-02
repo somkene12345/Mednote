@@ -82,14 +82,14 @@ useEffect(() => {
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
 const adjustedTestStartTime = new Date(testStartTime);
-adjustedTestStartTime.setHours(adjustedTestStartTime.getHours() + 1);
+adjustedTestStartTime.setMinutes(adjustedTestStartTime.getMinutes() - adjustedTestStartTime.getTimezoneOffset());
 
 const dataToSave = rows
   .map((row) => {
     if (row.action.trim() && row.symptom.trim()) {
       const startDate = new Date(adjustedTestStartTime);
       const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 25);
+      endDate.setMinutes(startDate.getMinutes() + 1440); // 1440 minutes = 24 hours
 
       return {
         Activity: row.action,
@@ -102,6 +102,7 @@ const dataToSave = rows
     return null;
   })
   .filter(Boolean);
+
 
 
     if (dataToSave.length === 0) {
