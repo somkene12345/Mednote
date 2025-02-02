@@ -168,7 +168,6 @@ export default function SearchPatientNotes() {
     // Determine if the test has ended (current time is after TestEndTime)
     const hasEnded = new Date() > endTime;
 
-    // Format the date to only include up to the minute (YYYY-MM-DD HH:mm)
 // Modify formatDate to show the time in local timezone
 const formatDate = (date: Date) => {
   // Using toLocaleString to display in local timezone
@@ -225,13 +224,6 @@ const formatDate = (date: Date) => {
   )}
 />
 
-
-
-                </View>
-              )}
-            </View>
-          )}
-        />
       )}
     </View>
   );
