@@ -49,15 +49,17 @@ export default function Index() {
 const checkTestEnd = () => {
   if (!testStartTime) return;
 
-  const endTime = calculateTestEndTime(testStartTime);
-  const currentTime = new Date().toISOString().slice(0, 16);
+  const startTime = new Date(testStartTime);
+  const currentTime = new Date();
+  const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
 
-  if (currentTime >= endTime) {
+  if (minutesDifference >= 1440) {
     setTestEnded(true);
   } else {
-    setTestEnded(false);  // Reset testEnded if it's within the valid range
+    setTestEnded(false); // Reset if within the valid time frame
   }
 };
+
 
 
 useEffect(() => {
