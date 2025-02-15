@@ -141,7 +141,6 @@ export default function SearchPatientNotes() {
         setLoading(false);
       }
     };
-  useEffect(() => {
     fetchPatients();
   }, []);
 // Confirm delete entire patient
