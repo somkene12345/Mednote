@@ -191,7 +191,7 @@ export default function SearchPatientNotes() {
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => {
                       const startTime = new Date(title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + 25 * 60 * 60 * 1000); // Fixed: Added 25 hours
+                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
 
                       endTime.setSeconds(0);
                       endTime.setMilliseconds(0);
@@ -208,6 +208,19 @@ export default function SearchPatientNotes() {
                           hour12: false,
                         });
                       };
+                      const formatTimestamp = (timestamp: string) => {
+                        const date = new Date(timestamp);
+                        date.setHours(date.getHours() - 1); // Fix the 1-hour late issue
+
+                        return date.toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      });
+                    };
 
                       return (
                         <View style={styles.sectionHeader}>
@@ -224,14 +237,15 @@ export default function SearchPatientNotes() {
                       );
                     }}
                     renderItem={({ item }) => (
-                      <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>{item.timestamp}</Text>
-                        <Text style={styles.note}>Activity: {item.Activity}</Text>
-                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-                        {item.Comment && item.Comment.trim() !== "" && (
-                          <Text style={styles.note}>Comments: {item.Comment}</Text>
-                        )}
-                      </View>
+                    <View style={styles.noteContainer}>
+                    <Text style={styles.noteDate}>{formatTimestamp(item.timestamp)}</Text>
+                    <Text style={styles.note}>Activity: {item.Activity}</Text>
+                    <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                    {item.Comment && item.Comment.trim() !== "" && (
+                      <Text style={styles.note}>Comments: {item.Comment}</Text>
+                    )}
+                  </View>
+
                     )}
                   />
                 </View>
