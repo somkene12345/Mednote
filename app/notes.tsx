@@ -175,20 +175,21 @@ export default function SearchPatientNotes() {
                     sections={item.sections.reverse()}
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderItem={({ item }) => (
-                      <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>
-                          {new Date(new Date(item.timestamp.replace(" ", "T")).getTime() + 3600000)
-                            .toLocaleString("en-US", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                              hour12: false,
-                            })
-                            .replace(",", "")}
-                        </Text>
+<View style={styles.noteContainer}>
+<Text style={styles.noteDate}>
+  {new Date(new Date(item.timestamp.replace(" ", "T")).getTime() + 3600000)
+    .toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false, // Keeps it in 24-hour format
+    })
+    .replace(",", "")}
+</Text>
+
                         <Text style={styles.note}>Activity: {item.Activity}</Text>
                         <Text style={styles.note}>Symptom: {item.Symptom}</Text>
                         {item.Comment && item.Comment.trim() !== "" && (
