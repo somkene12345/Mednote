@@ -227,10 +227,18 @@ export default function SearchPatientNotes() {
                       <View style={styles.noteContainer}>
 <Text style={styles.noteDate}>
   {new Date(new Date(item.timestamp.replace(" ", "T")).getTime() + 3600000)
-    .toISOString()
-    .replace("T", " ")
-    .substring(0, 19)}
+    .toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false, // Keeps it in 24-hour format
+    })
+    .replace(",", "")}
 </Text>
+
                         <Text style={styles.note}>Activity: {item.Activity}</Text>
                         <Text style={styles.note}>Symptom: {item.Symptom}</Text>
                         {item.Comment && item.Comment.trim() !== "" && (
