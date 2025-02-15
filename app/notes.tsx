@@ -244,7 +244,7 @@ const formatTimestamp = (timestamp: string) => {
                           </Text>
                         </View>
                       );
-                    }}
+                    }
                     renderItem={({ item }) => (
                     <View style={styles.noteContainer}>
                     <Text style={styles.noteDate}>{formatTimestamp(item.timestamp)}</Text>
