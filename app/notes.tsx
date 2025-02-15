@@ -225,7 +225,6 @@ export default function SearchPatientNotes() {
 }
 
 const styles = StyleSheet.create({
-  ... // Your existing styles
   deleteButton: {
     color: "red",
     fontSize: 20,
