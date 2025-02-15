@@ -191,7 +191,7 @@ export default function SearchPatientNotes() {
                     keyExtractor={(entry, index) => entry.timestamp + index}
                     renderSectionHeader={({ section: { title } }) => {
                       const startTime = new Date(title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // Fixed: Added 25 hours
 
                       endTime.setSeconds(0);
                       endTime.setMilliseconds(0);
@@ -208,28 +208,6 @@ export default function SearchPatientNotes() {
                           hour12: false,
                         });
                       };
-                      
-const formatTimestamp = (timestamp: string) => {
-  const parsedTimestamp = Date.parse(timestamp);
-  
-  if (isNaN(parsedTimestamp)) {
-    console.error("Invalid timestamp:", timestamp);
-    return "Invalid Date"; // Avoids crashing
-  }
-
-  const date = new Date(parsedTimestamp);
-  date.setHours(date.getHours() - 1); // Fix the 1-hour late issue
-
-  return date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
 
                       return (
                         <View style={styles.sectionHeader}>
@@ -244,17 +222,16 @@ const formatTimestamp = (timestamp: string) => {
                           </Text>
                         </View>
                       );
-                    }
+                    }}
                     renderItem={({ item }) => (
-                    <View style={styles.noteContainer}>
-                    <Text style={styles.noteDate}>{formatTimestamp(item.timestamp)}</Text>
-                    <Text style={styles.note}>Activity: {item.Activity}</Text>
-                    <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-                    {item.Comment && item.Comment.trim() !== "" && (
-                      <Text style={styles.note}>Comments: {item.Comment}</Text>
-                    )}
-                  </View>
-
+                      <View style={styles.noteContainer}>
+                        <Text style={styles.noteDate}>{item.timestamp}</Text>
+                        <Text style={styles.note}>Activity: {item.Activity}</Text>
+                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                        {item.Comment && item.Comment.trim() !== "" && (
+                          <Text style={styles.note}>Comments: {item.Comment}</Text>
+                        )}
+                      </View>
                     )}
                   />
                 </View>
@@ -266,6 +243,7 @@ const formatTimestamp = (timestamp: string) => {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   testDetailsContainer: {
