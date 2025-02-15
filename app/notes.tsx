@@ -21,6 +21,12 @@ export default function SearchPatientNotes() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const correctPassword = "hellouzoma";
+  const [modalVisible, setModalVisible] = useState(false);
+const [modalType, setModalType] = useState<"patient" | "test" | null>(null);
+const [selectedPatientKey, setSelectedPatientKey] = useState<string | null>(null);
+const [selectedTestTimestamp, setSelectedTestTimestamp] = useState<string | null>(null);
+const [selectedTestActivity, setSelectedTestActivity] = useState<string | null>(null);
+
 
   const handlePasswordSubmit = () => {
     if (password === correctPassword) {
@@ -141,23 +147,16 @@ export default function SearchPatientNotes() {
         setLoading(false);
       }
     };
+  useEffect(() => {
     fetchPatients();
   }, []);
 // Confirm delete entire patient
 const confirmDeletePatient = (patientKey: string) => {
-  Alert.alert(
-    "Delete Patient",
-    "Are you sure you want to delete this patient and all associated tests?",
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        onPress: () => deletePatient(patientKey),
-        style: "destructive",
-      },
-    ]
-  );
+  setSelectedPatientKey(patientKey);
+  setModalType("patient");
+  setModalVisible(true);
 };
+
 
 // Delete entire patient record
 const deletePatient = async (patientKey: string) => {
@@ -173,19 +172,12 @@ const deletePatient = async (patientKey: string) => {
 
 // Confirm delete single test entry
 const confirmDeleteTestEntry = (timestamp: string, activity: string) => {
-  Alert.alert(
-    "Delete Test Entry",
-    `Are you sure you want to delete the test entry for "${activity}"?`,
-    [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        onPress: () => deleteTestEntry(timestamp),
-        style: "destructive",
-      },
-    ]
-  );
+  setSelectedTestTimestamp(timestamp);
+  setSelectedTestActivity(activity);
+  setModalType("test");
+  setModalVisible(true);
 };
+
 
 // Delete individual test entry
 const deleteTestEntry = async (timestamp: string) => {
@@ -360,6 +352,60 @@ const deleteTestEntry = async (timestamp: string) => {
           )}
         />
       )}
+      {/* Modal for confirming deletion */}
+{modalVisible && (
+  <View style={{
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  }}>
+    <View style={{
+      width: "80%",
+      backgroundColor: "white",
+      padding: 20,
+      borderRadius: 10,
+      alignItems: "center",
+    }}>
+      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+        {modalType === "patient" ? "Delete Patient?" : "Delete Test Entry?"}
+      </Text>
+      <Text style={{ fontSize: 16, marginBottom: 20 }}>
+        {modalType === "patient"
+          ? "Are you sure you want to delete this patient and all their records?"
+          : `Are you sure you want to delete the test entry for ${selectedTestActivity}?`}
+      </Text>
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
+        <TouchableOpacity
+          style={{ backgroundColor: "red", padding: 10, borderRadius: 6, flex: 1, marginRight: 10, alignItems: "center" }}
+          onPress={() => {
+            if (modalType === "patient" && selectedPatientKey) {
+              deletePatient(selectedPatientKey);
+            } else if (modalType === "test" && selectedTestTimestamp) {
+              deleteTestEntry(selectedTestTimestamp);
+            }
+            setModalVisible(false);
+          }}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>Delete</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{ backgroundColor: "gray", padding: 10, borderRadius: 6, flex: 1, alignItems: "center" }}
+          onPress={() => setModalVisible(false)}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+)}
+
     </View>
   );
 }
@@ -487,4 +533,46 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
+  modalContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+},
+modalContent: {
+  width: "80%",
+  padding: 20,
+  backgroundColor: "white",
+  borderRadius: 10,
+  alignItems: "center",
+},
+modalText: {
+  fontSize: 18,
+  textAlign: "center",
+  marginBottom: 20,
+},
+modalButtons: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  width: "100%",
+},
+modalButtonCancel: {
+  backgroundColor: "gray",
+  padding: 10,
+  borderRadius: 6,
+  flex: 1,
+  alignItems: "center",
+  marginRight: 10,
+},
+modalButtonDelete: {
+  backgroundColor: "red",
+  padding: 10,
+  borderRadius: 6,
+  flex: 1,
+  alignItems: "center",
+},
+modalButtonText: {
+  color: "white",
+  fontWeight: "bold",
+},
 });
