@@ -170,12 +170,13 @@ const deletePatient = async (patientKey: string) => {
 };
 
 // Confirm delete single test entry
-const confirmDeleteTestEntry = (timestamp: string, activity: string) => {
+const confirmDeleteTestEntry = (timestamp: string, testEntry: any) => {
   setSelectedTestTimestamp(timestamp);
-  setSelectedTestActivity(activity);
+  setSelectedTestActivity(testEntry); // Store the full test entry object
   setModalType("test");
   setModalVisible(true);
 };
+
 
 
 // Delete individual test entry
@@ -338,7 +339,8 @@ const deleteTestEntry = async (timestamp: string) => {
                 borderRadius: 6,
                 alignSelf: "flex-start",
               }}
-              onPress={() => confirmDeleteTestEntry(item.timestamp, item.Activity)}
+              onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
+
             >
               <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete</Text>
             </TouchableOpacity>
@@ -380,30 +382,37 @@ const deleteTestEntry = async (timestamp: string) => {
           : `Are you sure you want to delete the test entry?`}
       </Text>
 
-      {modalType === "test" && selectedTestActivity && (
-        <>
-          <Text style={{ fontSize: 14, marginBottom: 5 }}>
-            <Text style={{ fontWeight: "bold" }}>Patient ID: </Text> 
-            {selectedTestActivity.groupKey}
-          </Text>
-          <Text style={{ fontSize: 14, marginBottom: 5 }}>
-            <Text style={{ fontWeight: "bold" }}>Timestamp: </Text> 
-            {selectedTestActivity.timestamp}
-          </Text>
-          {selectedTestActivity.symptom && (
-            <Text style={{ fontSize: 14, marginBottom: 5 }}>
-              <Text style={{ fontWeight: "bold" }}>Symptom: </Text> 
-              {selectedTestActivity.symptom}
-            </Text>
-          )}
-          {selectedTestActivity.comment && (
-            <Text style={{ fontSize: 14, marginBottom: 10 }}>
-              <Text style={{ fontWeight: "bold" }}>Comment: </Text> 
-              {selectedTestActivity.comment}
-            </Text>
-          )}
-        </>
-      )}
+{modalType === "test" && selectedTestActivity && (
+  <>
+    <Text style={{ fontSize: 14, marginBottom: 5 }}>
+      <Text style={{ fontWeight: "bold" }}>Patient ID: </Text> 
+      {expandedPatient} {/* The selected patient's ID */}
+    </Text>
+    <Text style={{ fontSize: 14, marginBottom: 5 }}>
+      <Text style={{ fontWeight: "bold" }}>Timestamp: </Text> 
+      {selectedTestTimestamp}
+    </Text>
+    {selectedTestActivity.Activity && (
+      <Text style={{ fontSize: 14, marginBottom: 5 }}>
+        <Text style={{ fontWeight: "bold" }}>Activity: </Text> 
+        {selectedTestActivity.Activity}
+      </Text>
+    )}
+    {selectedTestActivity.Symptom && (
+      <Text style={{ fontSize: 14, marginBottom: 5 }}>
+        <Text style={{ fontWeight: "bold" }}>Symptom: </Text> 
+        {selectedTestActivity.Symptom}
+      </Text>
+    )}
+    {selectedTestActivity.Comment && (
+      <Text style={{ fontSize: 14, marginBottom: 10 }}>
+        <Text style={{ fontWeight: "bold" }}>Comment: </Text> 
+        {selectedTestActivity.Comment}
+      </Text>
+    )}
+  </>
+)}
+
 
       <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
         <TouchableOpacity
