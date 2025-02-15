@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { database } from "../firebaseConfig"; // Assuming this is where your firebase config is stored
+import { database } from "../firebaseConfig"; // Firebase configuration
 import { ref, get } from "firebase/database";
 
 export default function SearchPatientNotes() {
@@ -18,15 +18,15 @@ export default function SearchPatientNotes() {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
-  const [authenticated, setAuthenticated] = useState(false); // Authentication state
-  const [password, setPassword] = useState(""); // Password input state
-  const correctPassword = "hellouzoma"; // Correct password
+  const [authenticated, setAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const correctPassword = "hellouzoma";
 
   // Handle password submission
   const handlePasswordSubmit = () => {
     if (password === correctPassword) {
       setAuthenticated(true);
-      setPassword(""); // Clear the password field
+      setPassword(""); // Clear password field
     } else {
       Alert.alert("Incorrect Password", "Please try again.");
     }
@@ -49,38 +49,7 @@ export default function SearchPatientNotes() {
         patientKey.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      const resultPatients = results.map((patientKey) => {
-        const patientData = data[patientKey];
-        const testDetails = patientData.TestDetails || {}; // Extracting test details
-
-        // Group entries by TestStartTime
-        const groupedEntries = Object.keys(patientData)
-          .filter((key) => key !== "TestDetails" && key !== "key")
-          .map((timestamp) => ({
-            timestamp,
-            ...patientData[timestamp]["0"], // Accessing data under "0"
-          }))
-          .reduce((groups, entry) => {
-            const startTime = entry.TestStartTime;
-            if (!groups[startTime]) {
-              groups[startTime] = [];
-            }
-            groups[startTime].push(entry);
-            return groups;
-          }, {});
-
-        // Convert grouped entries into a format for SectionList
-        const sections = Object.keys(groupedEntries).map((startTime) => ({
-          title: startTime,
-          data: groupedEntries[startTime],
-        }));
-
-        return {
-          key: patientKey,
-          testDetails,
-          sections, // Grouped entries by TestStartTime
-        };
-      });
+      const resultPatients = results.map((patientKey) => processPatientData(patientKey, data[patientKey]));
 
       setPatients(resultPatients);
     } catch (error) {
@@ -90,14 +59,51 @@ export default function SearchPatientNotes() {
     }
   };
 
-  // Handle text input changes
-  const handleChange = (text: string) => {
-    setSearchQuery(text);
+  // Function to process patient data and fix timestamps
+  const processPatientData = (patientKey: string, patientData: any) => {
+    const testDetails = patientData.TestDetails || {};
+
+    // Group entries by TestStartTime
+    const groupedEntries = Object.keys(patientData)
+      .filter((key) => key !== "TestDetails" && key !== "key")
+      .map((timestamp) => ({
+        timestamp: fixTimestamp(timestamp), // Fixing timestamp issue here
+        ...patientData[timestamp]["0"], // Accessing data under "0"
+      }))
+      .reduce((groups, entry) => {
+        const startTime = entry.TestStartTime;
+        if (!groups[startTime]) {
+          groups[startTime] = [];
+        }
+        groups[startTime].push(entry);
+        return groups;
+      }, {});
+
+    // Convert grouped entries into a format for SectionList
+    const sections = Object.keys(groupedEntries).map((startTime) => ({
+      title: startTime,
+      data: groupedEntries[startTime],
+    }));
+
+    return {
+      key: patientKey,
+      testDetails,
+      sections,
+    };
   };
 
-  // Toggle the display of patient details
-  const togglePatientDetails = (patientKey: string) => {
-    setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
+  // Function to adjust timestamp issue (fixing 1-hour late problem)
+  const fixTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    date.setHours(date.getHours() - 1); // Adjusting by -1 hour
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   };
 
   useEffect(() => {
@@ -113,38 +119,9 @@ export default function SearchPatientNotes() {
           return;
         }
 
-        const allPatients = Object.keys(data).map((patientKey) => {
-          const patientData = data[patientKey];
-          const testDetails = patientData.TestDetails || {};
-
-          // Group entries by TestStartTime
-          const groupedEntries = Object.keys(patientData)
-            .filter((key) => key !== "TestDetails" && key !== "key")
-            .map((timestamp) => ({
-              timestamp,
-              ...patientData[timestamp]["0"], // Accessing data under "0"
-            }))
-            .reduce((groups, entry) => {
-              const startTime = entry.TestStartTime;
-              if (!groups[startTime]) {
-                groups[startTime] = [];
-              }
-              groups[startTime].push(entry);
-              return groups;
-            }, {});
-
-          // Convert grouped entries into a format for SectionList
-          const sections = Object.keys(groupedEntries).map((startTime) => ({
-            title: startTime,
-            data: groupedEntries[startTime],
-          }));
-
-          return {
-            key: patientKey,
-            testDetails,
-            sections, // Grouped entries by TestStartTime
-          };
-        });
+        const allPatients = Object.keys(data).map((patientKey) =>
+          processPatientData(patientKey, data[patientKey])
+        );
 
         setPatients(allPatients);
       } catch (error) {
@@ -155,7 +132,7 @@ export default function SearchPatientNotes() {
     };
 
     fetchPatients();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   if (!authenticated) {
     return (
@@ -181,7 +158,7 @@ export default function SearchPatientNotes() {
         style={styles.input}
         placeholder="Search by patient name or hospital no"
         value={searchQuery}
-        onChangeText={handleChange}
+        onChangeText={setSearchQuery}
         onSubmitEditing={handleSearch}
       />
 
@@ -193,12 +170,11 @@ export default function SearchPatientNotes() {
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
             <View style={styles.patientContainer}>
-              <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
+              <TouchableOpacity onPress={() => setExpandedPatient(expandedPatient === item.key ? null : item.key)}>
                 <Text style={styles.patientName}>{item.key}</Text>
               </TouchableOpacity>
               {expandedPatient === item.key && (
                 <View>
-                  {/* Display Test Start Time and Test End Time once */}
                   {item.testDetails.TestStartTime && item.testDetails.TestEndTime && (
                     <View style={styles.testDetailsContainer}>
                       <Text style={styles.testDetail}>Test Start Time: {item.testDetails.TestStartTime}</Text>
@@ -207,48 +183,13 @@ export default function SearchPatientNotes() {
                   )}
 
                   <SectionList
-                    sections={item.sections.reverse()} // Reverse the sections for most recent first
+                    sections={item.sections.reverse()}
                     keyExtractor={(entry, index) => entry.timestamp + index}
-                    renderSectionHeader={({ section: { title } }) => {
-                      // Convert TestStartTime (with space instead of 'T') to Date object
-                      const startTime = new Date(title.replace(" ", "T")); // Convert "2025-01-25 14:00" to "2025-01-25T14:00"
-
-                      // Add 25 hours to the TestStartTime and round to the nearest minute
-                      const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000); // 25 hours in milliseconds
-
-                      // Round endTime to nearest minute by resetting seconds and milliseconds
-                      endTime.setSeconds(0);
-                      endTime.setMilliseconds(0);
-
-                      // Determine if the test has ended (current time is after TestEndTime)
-                      const hasEnded = new Date() > endTime;
-
-                      const formatDate = (date: Date) => {
-                        // Using toLocaleString to display in local timezone
-                        return date.toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        });
-                      };
-
-                      return (
-                        <View style={styles.sectionHeader}>
-                          <Text style={styles.sectionHeaderText}>
-                            Test Start Time: {formatDate(startTime)} {/* Display Test Start Time */}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Test End Time: {formatDate(endTime)} {/* Display the calculated Test End Time */}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            {hasEnded ? "Test has ended" : "Test is ongoing"} {/* Display test status */}
-                          </Text>
-                        </View>
-                      );
-                    }}
+                    renderSectionHeader={({ section: { title } }) => (
+                      <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionHeaderText}>Test Start Time: {title}</Text>
+                      </View>
+                    )}
                     renderItem={({ item }) => (
                       <View style={styles.noteContainer}>
                         <Text style={styles.noteDate}>{item.timestamp}</Text>
@@ -270,107 +211,17 @@ export default function SearchPatientNotes() {
   );
 }
 
-
 const styles = StyleSheet.create({
-  testDetailsContainer: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  testDetail: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  sectionHeader: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  sectionHeaderText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  authContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#f8f8f8",
-  },
-  authText: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  authInput: {
-    height: 40,
-    width: "80%",
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    fontSize: 16,
-    borderRadius: 6,
-    backgroundColor: "#fff",
-  },
-  authButton: {
-    backgroundColor: "#007AFF",
-    padding: 10,
-    borderRadius: 6,
-    width: "60%",
-    alignItems: "center",
-  },
-  authButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f8f8f8",
-  },
-  input: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    fontSize: 16,
-    borderRadius: 6,
-  },
-  patientContainer: {
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  patientName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  noteContainer: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  noteDate: {
-    fontSize: 14,
-    color: "#888",
-    marginBottom: 5,
-  },
-  note: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
+  authContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  authText: { fontSize: 18, marginBottom: 20 },
+  authInput: { height: 40, width: "80%", borderColor: "gray", borderWidth: 1, marginBottom: 20, paddingLeft: 10 },
+  authButton: { backgroundColor: "#007AFF", padding: 10, borderRadius: 6 },
+  authButtonText: { color: "#fff", fontWeight: "bold" },
+  container: { flex: 1, padding: 20 },
+  input: { height: 40, borderColor: "gray", borderWidth: 1, marginBottom: 20, paddingLeft: 10 },
+  patientContainer: { marginBottom: 20, borderWidth: 1, padding: 10, backgroundColor: "#fff" },
+  patientName: { fontSize: 18, fontWeight: "bold" },
+  noteContainer: { padding: 10, backgroundColor: "#f9f9f9", borderRadius: 6 },
+  noteDate: { fontSize: 14, color: "#888" },
+  note: { fontSize: 16 },
 });
