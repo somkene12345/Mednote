@@ -8,9 +8,9 @@ import {
   SectionList,
   StyleSheet,
   ActivityIndicator,
-  Modal,
+  Alert,
 } from "react-native";
-import { database } from "../firebaseConfig";
+import { database } from "../firebaseConfig"; // Assuming this is where your firebase config is stored
 import { ref, get, remove } from "firebase/database";
 
 export default function SearchPatientNotes() {
@@ -20,8 +20,6 @@ export default function SearchPatientNotes() {
   const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
   const correctPassword = "hellouzoma";
 
   const handlePasswordSubmit = () => {
@@ -29,7 +27,7 @@ export default function SearchPatientNotes() {
       setAuthenticated(true);
       setPassword("");
     } else {
-      alert("Incorrect Password");
+      Alert.alert("Incorrect Password", "Please try again.");
     }
   };
 
@@ -94,31 +92,125 @@ export default function SearchPatientNotes() {
     setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
   };
 
-  const confirmDeletePatient = (patientKey: string) => {
-    setPatientToDelete(patientKey);
-    setDeleteModalVisible(true);
-  };
-
-  const deletePatient = async () => {
-    if (!patientToDelete) return;
-    try {
-      await remove(ref(database, `entries/${patientToDelete}`));
-      setPatients((prev) => prev.filter((p) => p.key !== patientToDelete));
-    } catch (error) {
-      console.error("Error deleting patient:", error);
-    } finally {
-      setDeleteModalVisible(false);
-      setPatientToDelete(null);
-    }
-  };
-
-  const refreshData = () => {
-    handleSearch();
-  };
-
   useEffect(() => {
-    handleSearch();
+    const fetchPatients = async () => {
+      setLoading(true);
+      try {
+        const snapshot = await get(ref(database, "entries/"));
+        const data = snapshot.val();
+        if (!data) {
+          setPatients([]);
+          return;
+        }
+
+        const allPatients = Object.keys(data).map((patientKey) => {
+          const patientData = data[patientKey];
+          const testDetails = patientData.TestDetails || {};
+
+          const groupedEntries = Object.keys(patientData)
+            .filter((key) => key !== "TestDetails" && key !== "key")
+            .map((timestamp) => ({
+              timestamp,
+              ...patientData[timestamp]["0"],
+            }))
+            .reduce((groups, entry) => {
+              const startTime = entry.TestStartTime;
+              if (!groups[startTime]) {
+                groups[startTime] = [];
+              }
+              groups[startTime].push(entry);
+              return groups;
+            }, {});
+
+          const sections = Object.keys(groupedEntries).map((startTime) => ({
+            title: startTime,
+            data: groupedEntries[startTime],
+          }));
+
+          return {
+            key: patientKey,
+            testDetails,
+            sections,
+          };
+        });
+
+        setPatients(allPatients);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  useEffect(() => {
+    fetchPatients();
   }, []);
+// Confirm delete entire patient
+const confirmDeletePatient = (patientKey: string) => {
+  Alert.alert(
+    "Delete Patient",
+    "Are you sure you want to delete this patient and all associated tests?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        onPress: () => deletePatient(patientKey),
+        style: "destructive",
+      },
+    ]
+  );
+};
+
+// Delete entire patient record
+const deletePatient = async (patientKey: string) => {
+  try {
+    await remove(ref(database, `entries/${patientKey}`));
+    Alert.alert("Success", "Patient deleted successfully.");
+    setPatients((prev) => prev.filter((p) => p.key !== patientKey));
+  } catch (error) {
+    Alert.alert("Error", "Failed to delete patient.");
+    console.error("Error deleting patient:", error);
+  }
+};
+
+// Confirm delete single test entry
+const confirmDeleteTestEntry = (timestamp: string, activity: string) => {
+  Alert.alert(
+    "Delete Test Entry",
+    `Are you sure you want to delete the test entry for "${activity}"?`,
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        onPress: () => deleteTestEntry(timestamp),
+        style: "destructive",
+      },
+    ]
+  );
+};
+
+// Delete individual test entry
+const deleteTestEntry = async (timestamp: string) => {
+  try {
+    await remove(ref(database, `entries/${expandedPatient}/${timestamp}`));
+    Alert.alert("Success", "Test entry deleted successfully.");
+    setPatients((prevPatients) =>
+      prevPatients.map((patient) =>
+        patient.key === expandedPatient
+          ? {
+              ...patient,
+              sections: patient.sections.map((section) => ({
+                ...section,
+                data: section.data.filter((entry) => entry.timestamp !== timestamp),
+              })).filter((section) => section.data.length > 0),
+            }
+          : patient
+      ).filter((patient) => patient.sections.length > 0)
+    );
+  } catch (error) {
+    Alert.alert("Error", "Failed to delete test entry.");
+    console.error("Error deleting test entry:", error);
+  }
+};
 
   if (!authenticated) {
     return (
@@ -140,18 +232,27 @@ export default function SearchPatientNotes() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search by patient name or hospital no"
-          value={searchQuery}
-          onChangeText={handleChange}
-          onSubmitEditing={handleSearch}
-        />
-        <TouchableOpacity style={styles.refreshButton} onPress={refreshData}>
-          <Text style={styles.refreshButtonText}>↻</Text>
-        </TouchableOpacity>
-      </View>
+<View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+  <TextInput
+    style={[styles.input, { flex: 1 }]}
+    placeholder="Search by patient name or hospital no"
+    value={searchQuery}
+    onChangeText={handleChange}
+    onSubmitEditing={handleSearch}
+  />
+  <TouchableOpacity
+    style={{
+      marginLeft: 10,
+      backgroundColor: "blue",
+      padding: 10,
+      borderRadius: 6,
+    }}
+    onPress={handleSearch}
+  >
+    <Text style={{ color: "white", fontWeight: "bold" }}>🔄</Text>
+  </TouchableOpacity>
+</View>
+
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
@@ -160,120 +261,113 @@ export default function SearchPatientNotes() {
           data={patients}
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
-            <View style={styles.patientContainer}>
-              <View style={styles.patientHeader}>
-                <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-                  <Text style={styles.patientName}>{item.key}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => confirmDeletePatient(item.key)}>
-                  <Text style={styles.deleteButton}>🗑</Text>
-                </TouchableOpacity>
-              </View>
-              {expandedPatient === item.key && (
-                <View>
-                  <SectionList
-                    sections={item.sections.reverse()}
-                    keyExtractor={(entry, index) => entry.timestamp + index}
-                    renderItem={({ item }) => (
-<View style={styles.noteContainer}>
-<Text style={styles.noteDate}>
-  {new Date(new Date(item.timestamp.replace(" ", "T")).getTime() + 3600000)
-    .toLocaleString("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false, // Keeps it in 24-hour format
-    })
-    .replace(",", "")}
-</Text>
+<View style={styles.patientContainer}>
+  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+    <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
+      <Text style={styles.patientName}>{item.key}</Text>
+    </TouchableOpacity>
+    
+    <TouchableOpacity
+      style={{
+        backgroundColor: "red",
+        padding: 6,
+        borderRadius: 6,
+      }}
+      onPress={() => confirmDeletePatient(item.key)}
+    >
+      <Text style={{ color: "white", fontWeight: "bold" }}>🗑️</Text>
+    </TouchableOpacity>
+  </View>
 
-                        <Text style={styles.note}>Activity: {item.Activity}</Text>
-                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-                        {item.Comment && item.Comment.trim() !== "" && (
-                          <Text style={styles.note}>Comments: {item.Comment}</Text>
-                        )}
-                      </View>
-                    )}
-                  />
-                </View>
-              )}
+  {expandedPatient === item.key && (
+    <View>
+      <SectionList
+        sections={item.sections.reverse()}
+        keyExtractor={(entry, index) => entry.timestamp + index}
+        renderSectionHeader={({ section: { title } }) => {
+          const startTime = new Date(title.replace(" ", "T"));
+          const endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+
+          endTime.setSeconds(0);
+          endTime.setMilliseconds(0);
+
+          const hasEnded = new Date() > endTime;
+
+          const formatDate = (date: Date) => {
+            return date.toLocaleString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
+          };
+
+          return (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>
+                Test Start Time: {formatDate(startTime)}
+              </Text>
+              <Text style={styles.sectionHeaderText}>
+                Test End Time: {formatDate(endTime)}
+              </Text>
+              <Text style={styles.sectionHeaderText}>
+                {hasEnded ? "Test has ended" : "Test is ongoing"}
+              </Text>
             </View>
+          );
+        }}
+        renderItem={({ item }) => (
+          <View style={styles.noteContainer}>
+            <Text style={styles.noteDate}>
+              {new Date(new Date(item.timestamp.replace(" ", "T")).getTime() + 3600000)
+                .toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+                .replace(",", "")}
+            </Text>
+            <Text style={styles.note}>Activity: {item.Activity}</Text>
+            <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+            {item.Comment && item.Comment.trim() !== "" && (
+              <Text style={styles.note}>Comments: {item.Comment}</Text>
+            )}
+
+            {/* Delete Individual Test Entry Button */}
+            <TouchableOpacity
+              style={{
+                marginTop: 5,
+                backgroundColor: "red",
+                padding: 6,
+                borderRadius: 6,
+                alignSelf: "flex-start",
+              }}
+              onPress={() => confirmDeleteTestEntry(item.timestamp, item.Activity)}
+            >
+              <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+    </View>
+  )}
+</View>
           )}
         />
       )}
-
-      {/* Delete Confirmation Modal */}
-      <Modal visible={deleteModalVisible} transparent animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text>Are you sure you want to delete this patient?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButton} onPress={() => setDeleteModalVisible(false)}>
-                <Text>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.confirmDeleteButton]} onPress={deletePatient}>
-                <Text style={styles.modalButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
-  deleteButton: {
-    color: "red",
-    fontSize: 20,
-  },
-  refreshButton: {
-    backgroundColor: "blue",
-    padding: 10,
-    borderRadius: 6,
-    marginLeft: 10,
-  },
-  refreshButtonText: {
-    color: "white",
-    fontSize: 18,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  patientHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    padding: 20,
-    backgroundColor: "white",
-    borderRadius: 6,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  modalButton: {
-    padding: 10,
-  },
-  confirmDeleteButton: {
-    backgroundColor: "red",
-  },
-  modalButtonText: {
-    color: "white",
-  },
-testDetailsContainer: {
+  testDetailsContainer: {
     marginBottom: 10,
     padding: 10,
     backgroundColor: "#f9f9f9",
@@ -374,4 +468,24 @@ testDetailsContainer: {
     fontSize: 16,
     marginBottom: 5,
   },
-  });
+    refreshButton: {
+    marginLeft: 10,
+    backgroundColor: "#007AFF",
+    padding: 10,
+    borderRadius: 6,
+  },
+  refreshButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: "red",
+    padding: 5,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+});
