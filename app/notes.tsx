@@ -373,11 +373,37 @@ const deleteTestEntry = async (timestamp: string) => {
       <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
         {modalType === "patient" ? "Delete Patient?" : "Delete Test Entry?"}
       </Text>
-      <Text style={{ fontSize: 16, marginBottom: 20 }}>
+
+      <Text style={{ fontSize: 16, marginBottom: 10 }}>
         {modalType === "patient"
           ? "Are you sure you want to delete this patient and all their records?"
-          : `Are you sure you want to delete the test entry for ${selectedTestActivity}?`}
+          : `Are you sure you want to delete the test entry?`}
       </Text>
+
+      {modalType === "test" && selectedTestActivity && (
+        <>
+          <Text style={{ fontSize: 14, marginBottom: 5 }}>
+            <Text style={{ fontWeight: "bold" }}>Patient ID: </Text> 
+            {selectedTestActivity.groupKey}
+          </Text>
+          <Text style={{ fontSize: 14, marginBottom: 5 }}>
+            <Text style={{ fontWeight: "bold" }}>Timestamp: </Text> 
+            {selectedTestActivity.timestamp}
+          </Text>
+          {selectedTestActivity.symptom && (
+            <Text style={{ fontSize: 14, marginBottom: 5 }}>
+              <Text style={{ fontWeight: "bold" }}>Symptom: </Text> 
+              {selectedTestActivity.symptom}
+            </Text>
+          )}
+          {selectedTestActivity.comment && (
+            <Text style={{ fontSize: 14, marginBottom: 10 }}>
+              <Text style={{ fontWeight: "bold" }}>Comment: </Text> 
+              {selectedTestActivity.comment}
+            </Text>
+          )}
+        </>
+      )}
 
       <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
         <TouchableOpacity
@@ -404,6 +430,7 @@ const deleteTestEntry = async (timestamp: string) => {
     </View>
   </View>
 )}
+
 
     </View>
   );
