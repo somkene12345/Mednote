@@ -147,7 +147,6 @@ const [selectedTestActivity, setSelectedTestActivity] = useState<string | null>(
         setLoading(false);
       }
     };
-  useEffect(() => {
     fetchPatients();
   }, []);
 // Confirm delete entire patient
