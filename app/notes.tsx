@@ -208,19 +208,28 @@ export default function SearchPatientNotes() {
                           hour12: false,
                         });
                       };
-                      const formatTimestamp = (timestamp: string) => {
-                        const date = new Date(timestamp);
-                        date.setHours(date.getHours() - 1); // Fix the 1-hour late issue
+                      
+const formatTimestamp = (timestamp: string) => {
+  const parsedTimestamp = Date.parse(timestamp);
+  
+  if (isNaN(parsedTimestamp)) {
+    console.error("Invalid timestamp:", timestamp);
+    return "Invalid Date"; // Avoids crashing
+  }
 
-                        return date.toLocaleString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      });
-                    };
+  const date = new Date(parsedTimestamp);
+  date.setHours(date.getHours() - 1); // Fix the 1-hour late issue
+
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
 
                       return (
                         <View style={styles.sectionHeader}>
