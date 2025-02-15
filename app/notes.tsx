@@ -209,6 +209,22 @@ export default function SearchPatientNotes() {
                         });
                       };
 
+const addOneHour = (timestamp: string) => {
+  // Convert to Date object (Replace space with 'T' for ISO format)
+  const date = new Date(timestamp.replace(" ", "T"));
+
+  // Add one hour (3600000 milliseconds)
+  date.setTime(date.getTime() + 3600000);
+
+  // Format back to "YYYY-MM-DD HH:mm:ss"
+  const formattedTimestamp = date
+    .toISOString()
+    .replace("T", " ")
+    .substring(0, 19); // Remove milliseconds and timezone
+
+  return formattedTimestamp;
+};
+
                       return (
                         <View style={styles.sectionHeader}>
                           <Text style={styles.sectionHeaderText}>
@@ -225,7 +241,7 @@ export default function SearchPatientNotes() {
                     }}
                     renderItem={({ item }) => (
                       <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>{item.timestamp}</Text>
+                        <Text style={styles.noteDate}>{addOneHour(item.timestamp)}</Text>
                         <Text style={styles.note}>Activity: {item.Activity}</Text>
                         <Text style={styles.note}>Symptom: {item.Symptom}</Text>
                         {item.Comment && item.Comment.trim() !== "" && (
