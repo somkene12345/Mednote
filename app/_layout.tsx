@@ -1,6 +1,5 @@
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { View, Text, StyleSheet } from 'react-native';
-import { Stack } from "expo-router";
 import Index from './index';
 import SearchPatientNotes from './notes';
 
@@ -24,11 +23,32 @@ export default function RootLayout() {
             backgroundColor: '#fff',
             width: 250,
           },
-          headerShown: false
+          // Keep all default header styles
+          headerStyle: {
+            backgroundColor: '#f8f8f8', // Light gray header
+          },
+          headerTintColor: '#000', // Black text
+          headerTitleStyle: {
+            fontWeight: 'normal', // Regular weight
+          }
         }}
       >
-        <Drawer.Screen name="Home" component={Index} options={{ title: 'Mednote' }} />
-        <Drawer.Screen name="Search Notes" component={SearchPatientNotes} options={{ title: 'Mednote - Search Notes' }} />
+        <Drawer.Screen 
+          name="Home" 
+          component={Index} 
+          options={{ 
+            title: 'Mednote',
+            headerTitle: 'Mednote' // Keep original header title
+          }} 
+        />
+        <Drawer.Screen 
+          name="Search Notes" 
+          component={SearchPatientNotes} 
+          options={{ 
+            title: 'Search Notes',
+            headerTitle: 'Mednote - Search Notes' // Keep original header title
+          }} 
+        />
       </Drawer.Navigator>
       <Footer />
     </View>
