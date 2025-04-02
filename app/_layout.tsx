@@ -5,14 +5,6 @@ import SearchPatientNotes from './notes';
 
 const Drawer = createDrawerNavigator();
 
-function Footer() {
-  return (
-    <View style={styles.footer}>
-      <Text style={styles.footerText}>Designed by Somkenenna Okechukwu</Text>
-    </View>
-  );
-}
-
 export default function RootLayout() {
   return (
     <View style={{ flex: 1 }}>
@@ -23,44 +15,26 @@ export default function RootLayout() {
             backgroundColor: '#fff',
             width: 250,
           },
-          // Keep all default header styles
-          headerStyle: {
-            backgroundColor: '#f8f8f8', // Light gray header
-          },
-          headerTintColor: '#000', // Black text
-          headerTitleStyle: {
-            fontWeight: 'normal', // Regular weight
-          }
         }}
       >
-        <Drawer.Screen 
-          name="Home" 
-          component={Index} 
-          options={{ 
-            title: 'Mednote',
-            headerTitle: 'Mednote' // Keep original header title
-          }} 
-        />
-        <Drawer.Screen 
-          name="Search Notes" 
-          component={SearchPatientNotes} 
-          options={{ 
-            title: 'Search Notes',
-            headerTitle: 'Mednote - Search Notes' // Keep original header title
-          }} 
-        />
+        <Drawer.Screen name="Home" component={Index} options={{ title: 'Mednote' }} />
+        <Drawer.Screen name="Search Notes" component={SearchPatientNotes} options={{ title: 'Mednote - Search Notes' }} />
       </Drawer.Navigator>
-      <Footer />
+      
+      {/* Added footer only - no other changes */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Designed by Somkenenna Okechukwu</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   footer: {
-    height: 50,
-    backgroundColor: '#f8f8f8',
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f8f8f8',
     borderTopWidth: 1,
     borderTopColor: '#eee'
   },
