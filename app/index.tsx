@@ -178,23 +178,23 @@ export default function Index() {
       </View>
 
       <Text style={styles.labelTi}>Test Start Time:</Text>
-      <Text style={styles.teStTi}>
-        <input
-          type="datetime-local"
-          style={styles.inputit}
-          value={testStartTime}
-          onChange={(e) => {
-            const adjustedTime = new Date(e.target.value);
-            adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour for timezone adjustment
-            setTestStartTime(adjustedTime.toISOString().slice(0, 16));
-            setPasswordCorrect(false); // Reset password validation
-          }}
-          disabled={testEnded}
-          onFocus={() => {
-            if (!passwordCorrect) setModalVisible(true);
-          }}
-        />
-      </Text>
+<Text style={styles.teStTi}>
+  <input
+    type="datetime-local"
+    style={styles.inputit}
+    value={testStartTime}
+    onChange={(e) => {
+      const adjustedTime = new Date(e.target.value);
+      adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour for timezone adjustment
+      setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+      setPasswordCorrect(false); // Reset password validation
+      setTestEnded(false); // Reset test ended status when start time changes
+    }}
+    onFocus={() => {
+      if (!passwordCorrect) setModalVisible(true);
+    }}
+  />
+</Text>
 
       <View style={styles.durationContainer}>
         <Text style={styles.label}>Test Duration:</Text>
