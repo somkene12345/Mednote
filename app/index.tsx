@@ -182,9 +182,9 @@ export default function Index() {
   </View>
 
   <View style={styles.timeInputContainer}>
-    <Text style={styles.TeStTi}>Test Duration:</Text>
+    <Text style={styles.labelTi}>Test Duration:</Text>
     <select
-      style={styles.durationSelect}
+      style={styles.teStTi}
       value={testDuration}
       onChange={(e) => setTestDuration(parseInt(e.target.value))}
       disabled={testEnded}
@@ -522,13 +522,4 @@ timeInputContainer: {
   flex: 1,
   marginHorizontal: 5,
 },
-  durationSelect: {
-    fontSize: 16,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    width: '100%',
-  },
 });
