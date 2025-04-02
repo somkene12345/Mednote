@@ -17,6 +17,7 @@ export default function Index() {
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [testDuration, setTestDuration] = useState(24); // Default to 24 hours
   const [menuVisible, setMenuVisible] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,7 +43,7 @@ export default function Index() {
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
     const endDate = new Date(startDate);
-    endDate.setHours(startDate.getHours() + 25);
+    endDate.setHours(startDate.getHours() + testDuration);
     return endDate.toISOString().slice(0, 16).replace("T", " ");
   };
 
@@ -53,7 +54,7 @@ export default function Index() {
     const currentTime = new Date();
     const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
 
-    if (minutesDifference >= 1440) {
+    if (minutesDifference >= testDuration * 60) {
       setTestEnded(true);
     } else {
       setTestEnded(false); // Reset if within the valid time frame
@@ -62,7 +63,7 @@ export default function Index() {
 
   useEffect(() => {
     checkTestEnd();
-  }, [testStartTime]);
+  }, [testStartTime, testDuration]);
 
   const saveData = () => {
     if (testEnded) {
@@ -87,7 +88,7 @@ export default function Index() {
         if (row.action.trim() && row.symptom.trim()) {
           const startDate = new Date(adjustedTestStartTime);
           const endDate = new Date(startDate);
-          endDate.setMinutes(startDate.getMinutes() + 1440); // 1440 minutes = 24 hours
+          endDate.setHours(startDate.getHours() + testDuration);
 
           return {
             Activity: row.action,
@@ -135,6 +136,22 @@ export default function Index() {
     }
   };
 
+  const getTestStatus = () => {
+    if (!testStartTime) return "Set a test start time";
+
+    const currentTime = new Date();
+    const startTime = new Date(testStartTime);
+    const endTime = new Date(startTime);
+    endTime.setHours(startTime.getHours() + testDuration);
+
+    if (currentTime >= endTime) {
+      return "Test has ended";
+    } else {
+      const timeLeft = Math.max(0, Math.floor((endTime - currentTime) / 60000));
+      return `Test ends in ${timeLeft} minutes`;
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.headerContainer}>
@@ -145,7 +162,7 @@ export default function Index() {
             style={styles.headerInput}
             value={name}
             onChangeText={setName}
-            editable
+            editable={!testEnded}
           />
         </View>
         <View style={styles.inputGroup}>
@@ -155,7 +172,7 @@ export default function Index() {
             style={styles.headerInput}
             value={hospitalNo}
             onChangeText={setHospitalNo}
-            editable
+            editable={!testEnded}
           />
         </View>
       </View>
@@ -172,12 +189,26 @@ export default function Index() {
             setTestStartTime(adjustedTime.toISOString().slice(0, 16));
             setPasswordCorrect(false); // Reset password validation
           }}
-          disabled={false}
+          disabled={testEnded}
           onFocus={() => {
             if (!passwordCorrect) setModalVisible(true);
           }}
         />
       </Text>
+
+      <View style={styles.durationContainer}>
+        <Text style={styles.label}>Test Duration:</Text>
+        <select
+          style={styles.durationSelect}
+          value={testDuration}
+          onChange={(e) => setTestDuration(parseInt(e.target.value))}
+          disabled={testEnded}
+        >
+          <option value={24}>24 Hours</option>
+          <option value={48}>48 Hours</option>
+          <option value={168}>7 Days</option>
+        </select>
+      </View>
 
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
@@ -302,7 +333,7 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-   teStTi: {
+  teStTi: {
     alignSelf: "center",
     width: "auto",
     borderWidth: 1,
@@ -455,7 +486,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
-modalContainer: {
+  modalContainer: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -495,5 +526,20 @@ modalContainer: {
   modalButtonText: {
     color: "white",
     fontSize: 16,
+  },
+  durationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    alignSelf: "center",
+  },
+  durationSelect: {
+    fontSize: 16,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    marginLeft: 10,
   },
 });
