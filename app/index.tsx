@@ -52,12 +52,12 @@ export default function Index() {
 
     const startTime = new Date(testStartTime);
     const currentTime = new Date();
-    const minutesDifference = (currentTime - startTime) / (1000 * 60); // Convert milliseconds to minutes
+    const minutesDifference = (currentTime - startTime) / (1000 * 60);
 
     if (minutesDifference >= testDuration * 60) {
       setTestEnded(true);
     } else {
-      setTestEnded(false); // Reset if within the valid time frame
+      setTestEnded(false);
     }
   };
 
@@ -79,7 +79,6 @@ export default function Index() {
     const groupKey = `${name}-${hospitalNo}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    // Convert test start time to local time and adjust for timezone offset
     const adjustedTestStartTime = new Date(testStartTime);
     adjustedTestStartTime.setMinutes(adjustedTestStartTime.getMinutes() - adjustedTestStartTime.getTimezoneOffset());
 
@@ -95,7 +94,7 @@ export default function Index() {
             Symptom: row.symptom,
             Comment: row.comment,
             TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
-            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " ")
           };
         }
         return null;
@@ -136,22 +135,6 @@ export default function Index() {
     }
   };
 
-  const getTestStatus = () => {
-    if (!testStartTime) return "Set a test start time";
-
-    const currentTime = new Date();
-    const startTime = new Date(testStartTime);
-    const endTime = new Date(startTime);
-    endTime.setHours(startTime.getHours() + testDuration);
-
-    if (currentTime >= endTime) {
-      return "Test has ended";
-    } else {
-      const timeLeft = Math.max(0, Math.floor((endTime - currentTime) / 60000));
-      return `Test ends in ${timeLeft} minutes`;
-    }
-  };
-
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.headerContainer}>
@@ -177,37 +160,42 @@ export default function Index() {
         </View>
       </View>
 
-      <Text style={styles.labelTi}>Test Start Time:</Text>
-<Text style={styles.teStTi}>
-  <input
-    type="datetime-local"
-    style={styles.inputit}
-    value={testStartTime}
-    onChange={(e) => {
-      const adjustedTime = new Date(e.target.value);
-      adjustedTime.setHours(adjustedTime.getHours() + 1); // Add 1 hour for timezone adjustment
-      setTestStartTime(adjustedTime.toISOString().slice(0, 16));
-      setPasswordCorrect(false); // Reset password validation
-      setTestEnded(false); // Reset test ended status when start time changes
-    }}
-    onFocus={() => {
-      if (!passwordCorrect) setModalVisible(true);
-    }}
-  />
-</Text>
+      {/* Time inputs side by side */}
+      <View style={styles.timeInputContainer}>
+        <View style={styles.timeInputWrapper}>
+          <Text style={styles.labelTi}>Test Start Time:</Text>
+          <Text style={styles.teStTi}>
+            <input
+              type="datetime-local"
+              style={styles.inputit}
+              value={testStartTime}
+              onChange={(e) => {
+                const adjustedTime = new Date(e.target.value);
+                adjustedTime.setHours(adjustedTime.getHours() + 1);
+                setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+                setPasswordCorrect(false);
+              }}
+              disabled={testEnded}
+              onFocus={() => {
+                if (!passwordCorrect) setModalVisible(true);
+              }}
+            />
+          </Text>
+        </View>
 
-      <View style={styles.durationContainer}>
-        <Text style={styles.label}>Test Duration:</Text>
-        <select
-          style={styles.durationSelect}
-          value={testDuration}
-          onChange={(e) => setTestDuration(parseInt(e.target.value))}
-          disabled={testEnded}
-        >
-          <option value={24}>24 Hours</option>
-          <option value={48}>48 Hours</option>
-          <option value={168}>7 Days</option>
-        </select>
+        <View style={styles.timeInputWrapper}>
+          <Text style={styles.label}>Test Duration:</Text>
+          <select
+            style={styles.durationSelect}
+            value={testDuration}
+            onChange={(e) => setTestDuration(parseInt(e.target.value))}
+            disabled={testEnded}
+          >
+            <option value={24}>24 Hours</option>
+            <option value={48}>48 Hours</option>
+            <option value={168}>7 Days</option>
+          </select>
+        </View>
       </View>
 
       {testStartTime && (
@@ -301,7 +289,6 @@ export default function Index() {
         )}
       </ScrollView>
 
-      {/* Password Modal */}
       {modalVisible && (
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -527,19 +514,24 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
   },
-  durationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  timeInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
-    alignSelf: "center",
+    paddingHorizontal: 20,
+  },
+  timeInputWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
   },
   durationSelect: {
     fontSize: 16,
     padding: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderRadius: 6,
-    backgroundColor: "#fff",
-    marginLeft: 10,
+    backgroundColor: '#fff',
+    width: '100%',
   },
 });
