@@ -160,43 +160,42 @@ export default function Index() {
         </View>
       </View>
 
-      {/* Time inputs side by side */}
-      <View style={styles.timeInputContainer}>
-        <View style={styles.timeInputWrapper}>
-          <Text style={styles.labelTi}>Test Start Time:</Text>
-          <Text style={styles.teStTi}>
-            <input
-              type="datetime-local"
-              style={styles.inputit}
-              value={testStartTime}
-              onChange={(e) => {
-                const adjustedTime = new Date(e.target.value);
-                adjustedTime.setHours(adjustedTime.getHours() + 1);
-                setTestStartTime(adjustedTime.toISOString().slice(0, 16));
-                setPasswordCorrect(false);
-              }}
-              disabled={testEnded}
-              onFocus={() => {
-                if (!passwordCorrect) setModalVisible(true);
-              }}
-            />
-          </Text>
-        </View>
+<View style={styles.timeInputRow}>
+  <View style={styles.timeInputWrapper}>
+    <Text style={styles.label}>Test Start Time:</Text>
+    <Text style={styles.teStTi}>
+      <input
+        type="datetime-local"
+        style={[styles.inputit, styles.timeInput]}
+        value={testStartTime}
+        onChange={(e) => {
+          const adjustedTime = new Date(e.target.value);
+          adjustedTime.setHours(adjustedTime.getHours() + 1);
+          setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+          setPasswordCorrect(false);
+        }}
+        disabled={testEnded}
+        onFocus={() => {
+          if (!passwordCorrect) setModalVisible(true);
+        }}
+      />
+    </Text>
+  </View>
 
-        <View style={styles.timeInputWrapper}>
-          <Text style={styles.label}>Test Duration:</Text>
-          <select
-            style={styles.durationSelect}
-            value={testDuration}
-            onChange={(e) => setTestDuration(parseInt(e.target.value))}
-            disabled={testEnded}
-          >
-            <option value={24}>24 Hours</option>
-            <option value={48}>48 Hours</option>
-            <option value={168}>7 Days</option>
-          </select>
-        </View>
-      </View>
+  <View style={styles.timeInputWrapper}>
+    <Text style={styles.label}>Test Duration:</Text>
+    <select
+      style={[styles.durationSelect, styles.timeInput]}
+      value={testDuration}
+      onChange={(e) => setTestDuration(parseInt(e.target.value))}
+      disabled={testEnded}
+    >
+      <option value={24}>24 Hours</option>
+      <option value={48}>48 Hours</option>
+      <option value={168}>7 Days</option>
+    </select>
+  </View>
+</View>
 
       {testStartTime && (
         <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
@@ -514,17 +513,20 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
   },
-  timeInputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  timeInputWrapper: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
+timeInputRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginHorizontal: 20,
+  marginBottom: 20,
+},
+timeInputWrapper: {
+  flex: 1,
+  marginHorizontal: 5,
+},
+timeInput: {
+  width: '100%',
+  height: 40, // Match the height of other inputs
+},
   durationSelect: {
     fontSize: 16,
     padding: 8,
