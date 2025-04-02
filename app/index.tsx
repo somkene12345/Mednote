@@ -161,12 +161,12 @@ export default function Index() {
       </View>
 
 <View style={styles.timeInputRow}>
-  <View style={styles.timeInputWrapper}>
-    <Text style={styles.label}>Test Start Time:</Text>
+  <View style={styles.timeInputContainer}>
+    <Text style={styles.labelTi}>Test Start Time:</Text>
     <Text style={styles.teStTi}>
       <input
         type="datetime-local"
-        style={[styles.inputit, styles.timeInput]}
+        style={styles.inputit}
         value={testStartTime}
         onChange={(e) => {
           const adjustedTime = new Date(e.target.value);
@@ -174,7 +174,6 @@ export default function Index() {
           setTestStartTime(adjustedTime.toISOString().slice(0, 16));
           setPasswordCorrect(false);
         }}
-        disabled={testEnded}
         onFocus={() => {
           if (!passwordCorrect) setModalVisible(true);
         }}
@@ -182,10 +181,10 @@ export default function Index() {
     </Text>
   </View>
 
-  <View style={styles.timeInputWrapper}>
+  <View style={styles.timeInputContainer}>
     <Text style={styles.label}>Test Duration:</Text>
     <select
-      style={[styles.durationSelect, styles.timeInput]}
+      style={styles.durationSelect}
       value={testDuration}
       onChange={(e) => setTestDuration(parseInt(e.target.value))}
       disabled={testEnded}
@@ -519,13 +518,9 @@ timeInputRow: {
   marginHorizontal: 20,
   marginBottom: 20,
 },
-timeInputWrapper: {
+timeInputContainer: {
   flex: 1,
   marginHorizontal: 5,
-},
-timeInput: {
-  width: '100%',
-  height: 40, // Match the height of other inputs
 },
   durationSelect: {
     fontSize: 16,
