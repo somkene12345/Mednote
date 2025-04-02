@@ -182,7 +182,7 @@ export default function Index() {
   </View>
 
   <View style={styles.timeInputContainer}>
-    <Text style={styles.label}>Test Duration:</Text>
+    <Text style={styles.TeStTi}>Test Duration:</Text>
     <select
       style={styles.durationSelect}
       value={testDuration}
