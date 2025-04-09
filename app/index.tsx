@@ -203,14 +203,6 @@ return {
     </select>
   </View>
 </View>
-
-      {testStartTime && (
-        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
-          {testEnded
-            ? "Test has ended. You cannot add another entry."
-            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
-        </Text>
-      )}
 {testType === "ABP" && (
   <>
 <View style={{ flexDirection: "row", gap: 10 }}>
@@ -235,6 +227,14 @@ return {
 </View>
   </>
 )}
+      {testStartTime && (
+        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
+          {testEnded
+            ? "Test has ended. You cannot add another entry."
+            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
+        </Text>
+      )}
+
 
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.tableContainer}>
