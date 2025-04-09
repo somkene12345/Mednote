@@ -17,8 +17,8 @@ export default function SearchPatientNotes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-const [expandedPatientKey, setExpandedPatientKey] = useState<string | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [expandedPatientKey, setExpandedPatientKey] = useState<string | null>(null);
+  const [showList, setShowList] = useState(true);  const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const correctPassword = "hellouzoma";
   const [modalVisible, setModalVisible] = useState(false);
@@ -115,7 +115,13 @@ const [expandedPatientKey, setExpandedPatientKey] = useState<string | null>(null
   };
 
 const togglePatientDetails = (patientKey: string) => {
-  setExpandedPatientKey(prev => (prev === patientKey ? null : patientKey));
+  if (expandedPatientKey === patientKey) {
+    setExpandedPatientKey(null);
+    setShowList(true); // Show list again when minimized
+  } else {
+    setExpandedPatientKey(patientKey);
+    setShowList(false); // Hide list when expanded
+  }
 };
 
   useEffect(() => {
@@ -281,14 +287,14 @@ const togglePatientDetails = (patientKey: string) => {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-<FlatList
-  data={patients}
-  keyExtractor={(item) => item.key}
-  renderItem={({ item }) => (
-    <View style={styles.patientContainer}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+{showList && (
+  <FlatList
+    data={patients}
+    keyExtractor={(item) => item.key}
+    renderItem={({ item }) => (
+      <View style={styles.patientContainer}>
         <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-          <Text style={styles.patientName}>{item.key}</Text>
+          <Text>{item.key}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -303,9 +309,8 @@ const togglePatientDetails = (patientKey: string) => {
         </TouchableOpacity>
       </View>
 
-      {/* Show patient details when expanded */}
-      {expandedPatientKey === item.key && (
-        <View style={{ width: "100%" }}>
+{expandedPatientKey && (
+  <View style={{ width: "100%" }}>
           <SectionList
             sections={item.sections}
             keyExtractor={(item, index) => item.timestamp + index}
