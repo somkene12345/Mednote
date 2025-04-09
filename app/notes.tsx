@@ -367,7 +367,7 @@ export default function SearchPatientNotes() {
                         {item.SleepTime && item.WakeTime && (
                           <>
                             <Text style={styles.note}>Sleep Time: {item.SleepTime}</Text>
-                            <Text>Wake Time: {item.WakeTime}</Text>
+                            <Text style={styles.note}>Wake Time: {item.WakeTime}</Text>
                           </>
                         )}
 
