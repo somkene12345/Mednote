@@ -298,40 +298,12 @@ return {
           <Text style={styles.addButtonText}>Submit</Text>
         </TouchableOpacity>
 
-        {menuVisible && (
-          <View style={styles.menu}>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-              <Text style={styles.menuItemText}>
-                {showComments ? "Hide Comments" : "Add Comments"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
-              <Text style={styles.menuItemText}>Close Menu</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-{menuVisible && (
-  <View style={styles.menu}>
-    <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-      <Text style={styles.menuItemText}>
-        {showComments ? "Hide Comments" : "Add Comments"}
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      style={styles.menuItem}
-      onPress={() => setTestType(testType === "Holter" ? "ABP" : "Holter")}
-    >
-      <Text style={styles.menuItemText}>
-        Test Type: {testType} (Tap to change)
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
-      <Text style={styles.menuItemText}>Close Menu</Text>
-    </TouchableOpacity>
-  </View>
-)}
-
+<TouchableOpacity
+  style={styles.optionsButton}
+  onPress={toggleMenu}
+>
+  <Text style={styles.addButtonText}>Options</Text>
+</TouchableOpacity>
       </ScrollView>
 
       {modalVisible && (
