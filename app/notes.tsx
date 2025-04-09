@@ -327,8 +327,8 @@ export default function SearchPatientNotes() {
                             Test End: {formatDate(endTime)}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
-                            Type: {item.TestType ? item.TestType : "Holter"}
-                          </Text>
+                            Type: {item.data?.[0]?.TestType || "Holter"}
+                         </Text>
                           <Text style={styles.sectionHeaderText}>
                           Raw Type: {JSON.stringify(item)}
                           </Text>
