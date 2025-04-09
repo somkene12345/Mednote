@@ -333,15 +333,15 @@ renderSectionHeader={({ section }) => {
       <Text style={styles.sectionHeaderText}>Test End: {formatDate(endTime)}</Text>
       <Text style={styles.sectionHeaderText}>Type: {testType}</Text>
       <Text style={styles.sectionHeaderText}>Duration: {section.testDuration || 24} hours</Text>
-      <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
-        Status: {hasEnded ? "Completed" : "Ongoing"}
-      </Text>
       {section.data[0]?.SleepTime && section.data[0]?.WakeTime && (
         <>
           <Text style={styles.sectionHeaderText}>Sleep Time: {section.data[0].SleepTime}</Text>
           <Text style={styles.sectionHeaderText}>Wake Time: {section.data[0].WakeTime}</Text>
         </>
       )}
+      <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
+        Status: {hasEnded ? "Completed" : "Ongoing"}
+      </Text>
     </View>
   );
 }}
