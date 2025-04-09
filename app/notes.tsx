@@ -327,6 +327,9 @@ export default function SearchPatientNotes() {
                             Test End: {formatDate(endTime)}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
+                            Type: {item.TestType || Holter}
+                          </Text>
+                          <Text style={styles.sectionHeaderText}>
                             Duration: {section.testDuration || 24} hours
                           </Text>
                           <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
@@ -353,8 +356,11 @@ export default function SearchPatientNotes() {
                           <Text style={styles.note}>Comments: {item.Comment}</Text>
                         )}
                         {item.SleepTime && item.WakeTime && (
-                          <Text style={styles.logText}>
-                           Sleep Time: {item.SleepTime} | Wake Time: {item.WakeTime}
+                          <Text style={styles.note}>
+                           Sleep Time: {item.SleepTime}
+                           </Text>
+                          <Text style={styles.note}>
+                           Wake Time: {item.WakeTime}
                            </Text>
                            )}
 
