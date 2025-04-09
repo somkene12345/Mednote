@@ -336,11 +336,11 @@ return {
   style={styles.menuItem}
   onPress={() => {
     setTestType(testType === "Holter" ? "ABP" : "Holter");
-    toggleMenu(); // close the menu after toggling test type
+    toggleMenu(); // close the menu after change
   }}
 >
   <Text style={styles.menuItemText}>
-    Test Type: {testType}
+    Change to {testType === "Holter" ? "ABP" : "Holter"} Test
   </Text>
 </TouchableOpacity>
     <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
