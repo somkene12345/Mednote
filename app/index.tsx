@@ -213,25 +213,26 @@ return {
       )}
 {testType === "ABP" && (
   <>
+<View style={{ flexDirection: "row", gap: 10 }}>
+  <View style={{ flex: 1 }}>
     <Text style={styles.labelTi}>Sleep Time:</Text>
-    <Text style={styles.teStTi}>
-      <input
-        type="time"
-        style={styles.inputit}
-        value={sleepTime}
-        onChange={(e) => setSleepTime(e.target.value)}
-      />
-    </Text>
-
+    <input
+      type="time"
+      style={styles.inputit}
+      value={sleepTime}
+      onChange={(e) => setSleepTime(e.target.value)}
+    />
+  </View>
+  <View style={{ flex: 1 }}>
     <Text style={styles.labelTi}>Wake Time:</Text>
-    <Text style={styles.teStTi}>
-      <input
-        type="time"
-        style={styles.inputit}
-        value={wakeTime}
-        onChange={(e) => setWakeTime(e.target.value)}
-      />
-    </Text>
+    <input
+      type="time"
+      style={styles.inputit}
+      value={wakeTime}
+      onChange={(e) => setWakeTime(e.target.value)}
+    />
+  </View>
+</View>
   </>
 )}
 
