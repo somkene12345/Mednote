@@ -327,7 +327,7 @@ export default function SearchPatientNotes() {
                             Test End: {formatDate(endTime)}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
-                            Type: {item.TestType || Holter}
+                            Type: {item.TestType || "Holter"}
                           </Text>
                           <Text style={styles.sectionHeaderText}>
                             Duration: {section.testDuration || 24} hours
