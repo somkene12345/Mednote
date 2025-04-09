@@ -352,6 +352,11 @@ export default function SearchPatientNotes() {
                         {item.Comment && item.Comment.trim() !== "" && (
                           <Text style={styles.note}>Comments: {item.Comment}</Text>
                         )}
+                        {item.SleepTime && item.WakeTime && (
+                          <Text style={styles.logText}>
+                           Sleep Time: {item.SleepTime} | Wake Time: {item.WakeTime}
+                           </Text>
+                           )}
 
                         <TouchableOpacity
                           style={{
