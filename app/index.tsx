@@ -23,6 +23,10 @@ export default function Index() {
   const [modalVisible, setModalVisible] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordCorrect, setPasswordCorrect] = useState(false);
+  const [testType, setTestType] = useState("Holter");
+  const [sleepTime, setSleepTime] = useState("");
+  const [wakeTime, setWakeTime] = useState("");
+
 
   useEffect(() => {
     const savedName = localStorage.getItem("name");
@@ -89,13 +93,17 @@ export default function Index() {
           const endDate = new Date(startDate);
           endDate.setHours(startDate.getHours() + testDuration);
 
-          return {
-            Activity: row.action,
-            Symptom: row.symptom,
-            Comment: row.comment,
-            TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
-            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " ")
-          };
+return {
+  Activity: row.action,
+  Symptom: row.symptom,
+  Comment: row.comment,
+  TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
+  TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+  TestType: testType,
+  SleepTime: testType === "ABP" ? sleepTime : "",
+  WakeTime: testType === "ABP" ? wakeTime : "",
+};
+
         }
         return null;
       })
@@ -203,6 +211,29 @@ export default function Index() {
             : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
         </Text>
       )}
+{testType === "ABP" && (
+  <>
+    <Text style={styles.labelTi}>Sleep Time:</Text>
+    <Text style={styles.teStTi}>
+      <input
+        type="time"
+        style={styles.inputit}
+        value={sleepTime}
+        onChange={(e) => setSleepTime(e.target.value)}
+      />
+    </Text>
+
+    <Text style={styles.labelTi}>Wake Time:</Text>
+    <Text style={styles.teStTi}>
+      <input
+        type="time"
+        style={styles.inputit}
+        value={wakeTime}
+        onChange={(e) => setWakeTime(e.target.value)}
+      />
+    </Text>
+  </>
+)}
 
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.tableContainer}>
@@ -280,11 +311,27 @@ export default function Index() {
           </View>
         )}
 
-        {!menuVisible && (
-          <TouchableOpacity style={styles.toggleButton} onPress={toggleMenu}>
-            <Text style={styles.toggleButtonText}>Options</Text>
-          </TouchableOpacity>
-        )}
+{menuVisible && (
+  <View style={styles.menu}>
+    <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
+      <Text style={styles.menuItemText}>
+        {showComments ? "Hide Comments" : "Add Comments"}
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => setTestType(testType === "Holter" ? "ABP" : "Holter")}
+    >
+      <Text style={styles.menuItemText}>
+        Test Type: {testType} (Tap to change)
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
+      <Text style={styles.menuItemText}>Close Menu</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
       </ScrollView>
 
       {modalVisible && (
