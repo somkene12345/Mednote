@@ -318,7 +318,7 @@ export default function SearchPatientNotes() {
     });
   };
 
-  const testType = section.data?.[0]?.TestType || "Unknown"; // Ensure the data structure is correct
+  const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
 
   return (
     <View style={styles.sectionHeader}>
