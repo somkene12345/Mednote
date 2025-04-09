@@ -356,12 +356,8 @@ export default function SearchPatientNotes() {
                           <Text style={styles.note}>Comments: {item.Comment}</Text>
                         )}
                         {item.SleepTime && item.WakeTime && (
-                          <Text style={styles.note}>
-                           Sleep Time: {item.SleepTime}
-                           </Text>
-                          <Text style={styles.note}>
-                           Wake Time: {item.WakeTime}
-                           </Text>
+                          <Text style={styles.note}>Sleep Time: {item.SleepTime}</Text>
+                          <Text style={styles.note}>Wake Time: {item.WakeTime}</Text>
                            )}
 
                         <TouchableOpacity
