@@ -17,7 +17,7 @@ export default function SearchPatientNotes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
+const [expandedPatientKey, setExpandedPatientKey] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const correctPassword = "hellouzoma";
@@ -114,9 +114,9 @@ export default function SearchPatientNotes() {
     setSearchQuery(text);
   };
 
-  const togglePatientDetails = (patientKey: string) => {
-    setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
-  };
+const togglePatientDetails = (patientKey: string) => {
+  setExpandedPatientKey(prev => (prev === patientKey ? null : patientKey));
+};
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -281,116 +281,117 @@ export default function SearchPatientNotes() {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <FlatList
-          data={patients}
-          keyExtractor={(item) => item.key}
-          renderItem={({ item }) => (
-            <View style={styles.patientContainer}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-                  <Text style={styles.patientName}>{item.key}</Text>
-                </TouchableOpacity>
-                
+<FlatList
+  data={patients}
+  keyExtractor={(item) => item.key}
+  renderItem={({ item }) => (
+    <View style={styles.patientContainer}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
+          <Text style={styles.patientName}>{item.key}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: "red",
+            padding: 6,
+            borderRadius: 6,
+          }}
+          onPress={() => confirmDeletePatient(item.key)}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>🗑️</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Show patient details when expanded */}
+      {expandedPatientKey === item.key && (
+        <View style={{ width: "100%" }}>
+          <SectionList
+            sections={item.sections}
+            keyExtractor={(item, index) => item.timestamp + index}
+            renderSectionHeader={({ section }) => {
+              const startTime = new Date(section.title.replace(" ", "T"));
+              const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
+
+              const hasEnded = new Date() > endTime;
+
+              const formatDate = (date: Date) => {
+                return date.toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                });
+              };
+
+              const testType = section.data?.[0]?.TestType || "Holter"; 
+
+              return (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionHeaderText}>
+                    Test Start: {formatDate(startTime)}
+                  </Text>
+                  <Text style={styles.sectionHeaderText}>
+                    Test End: {formatDate(endTime)}
+                  </Text>
+                  <Text style={styles.sectionHeaderText}>
+                    Type: {testType}
+                  </Text>
+                  <Text style={styles.sectionHeaderText}>
+                    Duration: {section.testDuration || 24} hours
+                  </Text>
+                  <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
+                    Status: {hasEnded ? "Completed" : "Ongoing"}
+                  </Text>
+                </View>
+              );
+            }}
+            renderItem={({ item }) => (
+              <View style={styles.noteContainer}>
+                <Text style={styles.noteDate}>
+                  {new Date(item.timestamp.replace(" ", "T")).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                </Text>
+                <Text style={styles.note}>Activity: {item.Activity}</Text>
+                <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                {item.Comment && item.Comment.trim() !== "" && (
+                  <Text style={styles.note}>Comments: {item.Comment}</Text>
+                )}
+                {item.SleepTime && item.WakeTime && (
+                  <>
+                    <Text style={styles.note}>Sleep Time: {item.SleepTime}</Text>
+                    <Text style={styles.note}>Wake Time: {item.WakeTime}</Text>
+                  </>
+                )}
+
                 <TouchableOpacity
                   style={{
+                    marginTop: 5,
                     backgroundColor: "red",
                     padding: 6,
                     borderRadius: 6,
+                    alignSelf: "flex-start",
                   }}
-                  onPress={() => confirmDeletePatient(item.key)}
+                  onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
                 >
-                  <Text style={{ color: "white", fontWeight: "bold" }}>🗑️</Text>
+                  <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete Entry</Text>
                 </TouchableOpacity>
               </View>
-
-              {expandedPatient === item.key && (
-                <View style={{ width: "100%" }}>
-                  <SectionList
-                    sections={item.sections}
-                    keyExtractor={(item, index) => item.timestamp + index}
-                    renderSectionHeader={({ section }) => {
-                      const startTime = new Date(section.title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
-
-                      const hasEnded = new Date() > endTime;
-
-                      const formatDate = (date: Date) => {
-                        return date.toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        });
-                      };
-
-                      const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
-
-                      return (
-                        <View style={styles.sectionHeader}>
-                          <Text style={styles.sectionHeaderText}>
-                            Test Start: {formatDate(startTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Test End: {formatDate(endTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Type: {testType} {/* Display the correct TestType */}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Duration: {section.testDuration || 24} hours
-                          </Text>
-                          <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
-                            Status: {hasEnded ? "Completed" : "Ongoing"}
-                          </Text>
-                        </View>
-                      );
-                    }}
-                    renderItem={({ item }) => (
-                      <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>
-                          {new Date(item.timestamp.replace(" ", "T")).toLocaleString("en-US", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}
-                        </Text>
-                        <Text style={styles.note}>Activity: {item.Activity}</Text>
-                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
-                        {item.Comment && item.Comment.trim() !== "" && (
-                          <Text style={styles.note}>Comments: {item.Comment}</Text>
-                        )}
-                        {item.SleepTime && item.WakeTime && (
-                          <>
-                            <Text style={styles.note}>Sleep Time: {item.SleepTime}</Text>
-                            <Text style={styles.note}>Wake Time: {item.WakeTime}</Text>
-                          </>
-                        )}
-
-                       <TouchableOpacity
-                          style={{
-                            marginTop: 5,
-                            backgroundColor: "red",
-                            padding: 6,
-                            borderRadius: 6,
-                            alignSelf: "flex-start",
-                          }}
-                          onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
-                        >
-                          <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete Entry</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  />
-                </View>
-              )}
-            </View>
-          )}
-        />
+            )}
+          />
+        </View>
+      )}
+    </View>
+  )}
+/>
       )}
 
       {modalVisible && (
