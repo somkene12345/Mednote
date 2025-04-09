@@ -330,10 +330,6 @@ export default function SearchPatientNotes() {
                             Type: {item.data?.[0]?.TestType || "Holter"}
                          </Text>
                           <Text style={styles.sectionHeaderText}>
-                          Raw Type: {JSON.stringify(item)}
-                          </Text>
-
-                          <Text style={styles.sectionHeaderText}>
                             Duration: {section.testDuration || 24} hours
                           </Text>
                           <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
