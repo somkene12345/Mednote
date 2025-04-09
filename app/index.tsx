@@ -28,21 +28,32 @@ export default function Index() {
   const [wakeTime, setWakeTime] = useState("");
 
 
-  useEffect(() => {
-    const savedName = localStorage.getItem("name");
-    const savedHospitalNo = localStorage.getItem("hospitalNo");
-    const savedTestStartTime = localStorage.getItem("testStartTime");
+useEffect(() => {
+  const savedName = localStorage.getItem("name");
+  const savedHospitalNo = localStorage.getItem("hospitalNo");
+  const savedTestStartTime = localStorage.getItem("testStartTime");
+  const savedSleepTime = localStorage.getItem("sleepTime");
+  const savedWakeTime = localStorage.getItem("wakeTime");
+  const savedTestType = localStorage.getItem("testType");
 
-    if (savedName) setName(savedName);
-    if (savedHospitalNo) setHospitalNo(savedHospitalNo);
-    if (savedTestStartTime) setTestStartTime(savedTestStartTime);
-  }, []);
+  if (savedName) setName(savedName);
+  if (savedHospitalNo) setHospitalNo(savedHospitalNo);
+  if (savedTestStartTime) setTestStartTime(savedTestStartTime);
+  if (savedSleepTime) setSleepTime(savedSleepTime);
+  if (savedWakeTime) setWakeTime(savedWakeTime);
+  if (savedTestType) setTestType(savedTestType);
+}, []);
 
-  useEffect(() => {
-    localStorage.setItem("name", name);
-    localStorage.setItem("hospitalNo", hospitalNo);
-    localStorage.setItem("testStartTime", testStartTime);
-  }, [name, hospitalNo, testStartTime]);
+
+useEffect(() => {
+  localStorage.setItem("name", name);
+  localStorage.setItem("hospitalNo", hospitalNo);
+  localStorage.setItem("testStartTime", testStartTime);
+  localStorage.setItem("sleepTime", sleepTime);
+  localStorage.setItem("wakeTime", wakeTime);
+  localStorage.setItem("testType", testType);
+}, [name, hospitalNo, testStartTime, sleepTime, wakeTime, testType]);
+
 
   const calculateTestEndTime = (startTime) => {
     const startDate = new Date(startTime);
