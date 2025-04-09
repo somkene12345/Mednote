@@ -371,8 +371,17 @@ export default function SearchPatientNotes() {
                           </>
                         )}
 
-                        <TouchableOpacity onPress={() => confirmDeleteTestEntry(item.timestamp, item)}>
-                          <Text>🗑️ Delete Entry</Text>
+                       <TouchableOpacity
+                          style={{
+                            marginTop: 5,
+                            backgroundColor: "red",
+                            padding: 6,
+                            borderRadius: 6,
+                            alignSelf: "flex-start",
+                          }}
+                          onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
+                        >
+                          <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete Entry</Text>
                         </TouchableOpacity>
                       </View>
                     )}
@@ -385,22 +394,30 @@ export default function SearchPatientNotes() {
       )}
 
       {modalVisible && (
-        <View>
-          <View>
-            <Text>{modalType === "patient" ? "Delete Patient?" : "Delete Test Entry?"}</Text>
-            <Text>{modalType === "patient" ? "This will delete ALL records for this patient. Continue?" : "Are you sure you want to delete this test entry?"}</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>
+              {modalType === "patient" ? "Delete Patient?" : "Delete Test Entry?"}
+            </Text>
+
+            <Text style={{ fontSize: 16, marginBottom: 10 }}>
+              {modalType === "patient"
+                ? "This will delete ALL records for this patient. Continue?"
+                : "Are you sure you want to delete this test entry?"}
+            </Text>
 
             {modalType === "test" && selectedTestActivity && (
-              <View>
-                <Text>Details:</Text>
+              <View style={{ width: "100%", marginBottom: 10 }}>
+                <Text style={{ fontWeight: "bold" }}>Details:</Text>
                 <Text>Activity: {selectedTestActivity.Activity}</Text>
                 <Text>Symptom: {selectedTestActivity.Symptom}</Text>
                 <Text>Recorded: {new Date(selectedTestActivity.timestamp.replace(" ", "T")).toLocaleString()}</Text>
               </View>
             )}
 
-            <View>
+            <View style={styles.modalButtons}>
               <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
                 onPress={() => {
                   if (modalType === "patient" && selectedPatientKey) {
                     deletePatient(selectedPatientKey);
@@ -410,11 +427,14 @@ export default function SearchPatientNotes() {
                   setModalVisible(false);
                 }}
               >
-                <Text>Delete</Text>
+                <Text style={styles.modalButtonText}>Delete</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text>Cancel</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
