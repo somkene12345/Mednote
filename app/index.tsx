@@ -299,12 +299,33 @@ return {
         </TouchableOpacity>
 
 <TouchableOpacity
-  style={styles.optionsButton}
+  style={styles.toggleButton}
   onPress={toggleMenu}
 >
-  <Text style={styles.addButtonText}>Options</Text>
+  <Text style={styles.toggleButtonText}>Options</Text>
 </TouchableOpacity>
       </ScrollView>
+      
+{menuVisible && (
+  <View style={styles.menu}>
+    <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
+      <Text style={styles.menuItemText}>
+        {showComments ? "Hide Comments" : "Add Comments"}
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => setTestType(testType === "Holter" ? "ABP" : "Holter")}
+    >
+      <Text style={styles.menuItemText}>
+        Test Type: {testType} (Tap to change)
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
+      <Text style={styles.menuItemText}>Close Menu</Text>
+    </TouchableOpacity>
+  </View>
+)}
 
       {modalVisible && (
         <View style={styles.modalContainer}>
