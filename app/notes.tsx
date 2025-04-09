@@ -301,43 +301,45 @@ export default function SearchPatientNotes() {
                   <SectionList
                     sections={item.sections}
                     keyExtractor={(item, index) => item.timestamp + index}
-                    renderSectionHeader={({ section }) => {
-                      const startTime = new Date(section.title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
-                      
-                      const hasEnded = new Date() > endTime;
+     renderSectionHeader={({ section }) => {
+  const startTime = new Date(section.title.replace(" ", "T"));
+  const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
 
-                      const formatDate = (date: Date) => {
-                        return date.toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        });
-                      };
+  const hasEnded = new Date() > endTime;
 
-                      return (
-                        <View style={styles.sectionHeader}>
-                          <Text style={styles.sectionHeaderText}>
-                            Test Start: {formatDate(startTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Test End: {formatDate(endTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Type: {item?.data?.[0]?.TestType || "Unknown"}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Duration: {section.testDuration || 24} hours
-                          </Text>
-                          <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
-                            Status: {hasEnded ? "Completed" : "Ongoing"}
-                          </Text>
-                        </View>
-                      );
-                    }}
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  const testType = section.data?.[0]?.TestType || "Unknown"; // Ensure the data structure is correct
+
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>
+        Test Start: {formatDate(startTime)}
+      </Text>
+      <Text style={styles.sectionHeaderText}>
+        Test End: {formatDate(endTime)}
+      </Text>
+      <Text style={styles.sectionHeaderText}>
+        Type: {testType} {/* Display the correct TestType */}
+      </Text>
+      <Text style={styles.sectionHeaderText}>
+        Duration: {section.testDuration || 24} hours
+      </Text>
+      <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
+        Status: {hasEnded ? "Completed" : "Ongoing"}
+      </Text>
+    </View>
+  );
+}}
                     renderItem={({ item }) => (
                       <View style={styles.noteContainer}>
                         <Text style={styles.noteDate}>
