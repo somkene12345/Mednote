@@ -63,38 +63,38 @@ export default function SearchPatientNotes() {
       const resultPatients = results.map((patientKey) => {
         const patientData = data[patientKey];
         
-        const groupedEntries = Object.keys(patientData)
-          .filter(key => key !== "TestDetails" && key !== "key")
-          .flatMap(timestamp => {
-            const entry = patientData[timestamp]?.["0"];
-            if (!entry) return [];
-            
-            return {
-              timestamp,
-              ...entry,
-              calculatedDuration: calculateDurationHours(
-                entry.TestStartTime, 
-                entry.TestEndTime
-              )
-            };
-          })
-          .reduce((groups: any, entry) => {
-            const startTime = entry.TestStartTime;
-            if (!groups[startTime]) {
-              groups[startTime] = {
-                entries: [],
-                testDuration: entry.calculatedDuration || 24
-              };
-            }
-            groups[startTime].entries.push(entry);
-            return groups;
-          }, {});
+const groupedEntries = Object.keys(patientData)
+  .filter(key => key !== "TestDetails" && key !== "key")
+  .flatMap(timestamp => {
+    const entry = patientData[timestamp]?.["0"];
+    if (!entry) return [];
+    
+    const groupKey = `${entry.TestStartTime}-${entry.TestEndTime}-${entry.SleepTime}-${entry.WakeTime}-${entry.TestType}`;
 
-        const sections = Object.keys(groupedEntries).map((startTime) => ({
-          title: startTime,
-          data: groupedEntries[startTime].entries,
-          testDuration: groupedEntries[startTime].testDuration
-        }));
+    return {
+      timestamp,
+      groupKey, // Unique key for grouping
+      ...entry,
+      calculatedDuration: calculateDurationHours(entry.TestStartTime, entry.TestEndTime)
+    };
+  })
+  .reduce((groups: any, entry) => {
+    if (!groups[entry.groupKey]) {
+      groups[entry.groupKey] = {
+        entries: [],
+        testDuration: entry.calculatedDuration || 24
+      };
+    }
+    groups[entry.groupKey].entries.push(entry);
+    return groups;
+  }, {});
+
+const sections = Object.keys(groupedEntries).map((groupKey) => ({
+  title: groupKey,
+  data: groupedEntries[groupKey].entries,
+  testDuration: groupedEntries[groupKey].testDuration
+}));
+
 
         return {
           key: patientKey,
@@ -308,45 +308,43 @@ export default function SearchPatientNotes() {
                   <SectionList
                     sections={item.sections}
                     keyExtractor={(item, index) => item.timestamp + index}
-                    renderSectionHeader={({ section }) => {
-                      const startTime = new Date(section.title.replace(" ", "T"));
-                      const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
+renderSectionHeader={({ section }) => {
+  const startTime = new Date(section.title.replace(" ", "T"));
+  const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
 
-                      const hasEnded = new Date() > endTime;
+  const hasEnded = new Date() > endTime;
 
-                      const formatDate = (date: Date) => {
-                        return date.toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        });
-                      };
+  const formatDate = (date: Date) => {
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
 
-                      const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
+  const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
 
-                      return (
-                        <View style={styles.sectionHeader}>
-                          <Text style={styles.sectionHeaderText}>
-                            Test Start: {formatDate(startTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Test End: {formatDate(endTime)}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Type: {testType} {/* Display the correct TestType */}
-                          </Text>
-                          <Text style={styles.sectionHeaderText}>
-                            Duration: {section.testDuration || 24} hours
-                          </Text>
-                          <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
-                            Status: {hasEnded ? "Completed" : "Ongoing"}
-                          </Text>
-                        </View>
-                      );
-                    }}
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>Test Start: {formatDate(startTime)}</Text>
+      <Text style={styles.sectionHeaderText}>Test End: {formatDate(endTime)}</Text>
+      <Text style={styles.sectionHeaderText}>Type: {testType}</Text>
+      <Text style={styles.sectionHeaderText}>Duration: {section.testDuration || 24} hours</Text>
+      <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
+        Status: {hasEnded ? "Completed" : "Ongoing"}
+      </Text>
+      {section.data[0]?.SleepTime && section.data[0]?.WakeTime && (
+        <>
+          <Text style={styles.sectionHeaderText}>Sleep Time: {section.data[0].SleepTime}</Text>
+          <Text style={styles.sectionHeaderText}>Wake Time: {section.data[0].WakeTime}</Text>
+        </>
+      )}
+    </View>
+  );
+}}
                     renderItem={({ item }) => (
                       <View style={styles.noteContainer}>
                         <Text style={styles.noteDate}>
@@ -363,12 +361,6 @@ export default function SearchPatientNotes() {
                         <Text style={styles.note}>Symptom: {item.Symptom}</Text>
                         {item.Comment && item.Comment.trim() !== "" && (
                           <Text style={styles.note}>Comments: {item.Comment}</Text>
-                        )}
-                        {item.SleepTime && item.WakeTime && (
-                          <>
-                            <Text style={styles.note}>Sleep Time: {item.SleepTime}</Text>
-                            <Text style={styles.note}>Wake Time: {item.WakeTime}</Text>
-                          </>
                         )}
 
                        <TouchableOpacity
