@@ -60,12 +60,16 @@ const calculateTestEndTime = (startTime) => {
   const endDate = new Date(startDate);
   endDate.setHours(startDate.getHours() + testDuration);
 
-  return endDate.toLocaleTimeString("en-US", {
+  const datePart = endDate.toISOString().slice(0, 10); // YYYY-MM-DD
+  const timePart = endDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
+
+  return `${datePart} ${timePart}`;
 };
+
 
 
 
