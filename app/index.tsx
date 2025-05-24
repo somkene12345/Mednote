@@ -55,21 +55,18 @@ useEffect(() => {
 }, [name, hospitalNo, testStartTime, sleepTime, wakeTime, testType]);
 
 
-const pad = (n) => n.toString().padStart(2, "0");
-
 const calculateTestEndTime = (startTime) => {
   const startDate = new Date(startTime);
   const endDate = new Date(startDate);
   endDate.setHours(startDate.getHours() + testDuration);
 
-  const year = endDate.getFullYear();
-  const month = pad(endDate.getMonth() + 1);
-  const day = pad(endDate.getDate());
-  const hours = pad(endDate.getHours());
-  const minutes = pad(endDate.getMinutes());
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  return endDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 };
+
 
 
   const checkTestEnd = () => {
