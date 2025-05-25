@@ -54,13 +54,16 @@ useEffect(() => {
   localStorage.setItem("testType", testType);
 }, [name, hospitalNo, testStartTime, sleepTime, wakeTime, testType]);
 
-
 const calculateTestEndTime = (startTime) => {
   const startDate = new Date(startTime);
   const endDate = new Date(startDate);
   endDate.setHours(startDate.getHours() + testDuration);
 
-  const datePart = endDate.toISOString().slice(0, 10); // YYYY-MM-DD
+  const month = String(endDate.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const day = String(endDate.getDate()).padStart(2, "0");
+  const year = endDate.getFullYear();
+  const datePart = `${month}/${day}/${year}`;
+
   const timePart = endDate.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -69,8 +72,6 @@ const calculateTestEndTime = (startTime) => {
 
   return `${datePart} ${timePart}`;
 };
-
-
 
 
   const checkTestEnd = () => {
