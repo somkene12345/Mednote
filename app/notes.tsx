@@ -27,7 +27,23 @@ export default function SearchPatientNotes() {
   const [selectedTestTimestamp, setSelectedTestTimestamp] = useState<string | null>(null);
   const [selectedTestActivity, setSelectedTestActivity] = useState<any>(null);
 
+  const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp.replace(" ", "T"));
 
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${month}/${day}/${year} ${time}`;
+};
+
+  
   const calculateDurationHours = (startTimeStr: string, endTimeStr: string): number => {
     try {
       const start = new Date(startTimeStr.replace(" ", "T"));
@@ -329,24 +345,6 @@ const formatDate = (date: Date) => {
   return `${month}/${day}/${year} ${time}`;
 };
   
-  const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp.replace(" ", "T"));
-
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const year = date.getFullYear();
-
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${month}/${day}/${year} ${time}`;
-};
-
-
-
   const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
 
   return (
