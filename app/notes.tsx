@@ -328,6 +328,23 @@ const formatDate = (date: Date) => {
 
   return `${month}/${day}/${year} ${time}`;
 };
+  
+  const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp.replace(" ", "T"));
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${month}/${day}/${year} ${time}`;
+};
+
 
 
   const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
@@ -352,16 +369,7 @@ const formatDate = (date: Date) => {
 }}
                     renderItem={({ item }) => (
                       <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>
-                          {new Date(item.timestamp.replace(" ", "T")).toLocaleString("en-US", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: false,
-                          })}
-                        </Text>
+                        <Text style={styles.noteDate}>{formatTimestamp(item.timestamp)}</Text>
                         <Text style={styles.note}>Activity: {item.Activity}</Text>
                         <Text style={styles.note}>Symptom: {item.Symptom}</Text>
                         {item.Comment && item.Comment.trim() !== "" && (
@@ -408,7 +416,7 @@ const formatDate = (date: Date) => {
                 <Text style={{ fontWeight: "bold" }}>Details:</Text>
                 <Text>Activity: {selectedTestActivity.Activity}</Text>
                 <Text>Symptom: {selectedTestActivity.Symptom}</Text>
-                <Text>Recorded: {new Date(selectedTestActivity.timestamp.replace(" ", "T")).toLocaleString()}</Text>
+                <Text>Recorded: {formatTimestamp(selectedTestActivity.timestamp)}</Text>
               </View>
             )}
 
