@@ -184,17 +184,31 @@ const sections = Object.keys(groupedEntries).map((startTime) => ({
                 )
               };
             })
-            .reduce((groups: any, entry) => {
-              const startTime = entry.TestStartTime;
-              if (!groups[startTime]) {
-                groups[startTime] = {
-                  entries: [],
-                  testDuration: entry.calculatedDuration || 24
-                };
-              }
-              groups[startTime].entries.push(entry);
-              return groups;
-            }, {});
+.reduce((groups: any, entry) => {
+  const startTime = entry.TestStartTime;
+  if (!groups[startTime]) {
+    groups[startTime] = {
+      entries: [],
+      testDuration: entry.calculatedDuration || 24,
+      sleepTime: null,
+      wakeTime: null,
+    };
+  }
+
+  groups[startTime].entries.push(entry);
+
+  // Use latest non-empty Sleep/Wake time
+  if (entry.SleepTime && entry.SleepTime.trim()) {
+    groups[startTime].sleepTime = entry.SleepTime;
+  }
+
+  if (entry.WakeTime && entry.WakeTime.trim()) {
+    groups[startTime].wakeTime = entry.WakeTime;
+  }
+
+  return groups;
+}, {});
+
 
 const sections = Object.keys(groupedEntries).map((startTime) => ({
   title: startTime,
