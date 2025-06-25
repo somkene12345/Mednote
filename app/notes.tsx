@@ -103,40 +103,40 @@ const groupedEntries = Object.keys(patientData)
       testDuration: entry.calculatedDuration || 24,
       sleepTime: null,
       wakeTime: null,
-      latestTimestamp: null,
+      latestSleepTimeTimestamp: null,
+      latestWakeTimeTimestamp: null,
     };
   }
 
   groups[startTime].entries.push(entry);
 
-  // Update latest SleepTime if available
-  if (entry.SleepTime) {
-    const currentLatest = groups[startTime].latestTimestamp
-      ? new Date(groups[startTime].latestTimestamp)
-      : new Date(0);
-    const entryTime = new Date(entry.timestamp.replace(" ", "T"));
+  const entryTimestamp = new Date(entry.timestamp.replace(" ", "T"));
 
-    if (entryTime > currentLatest) {
+  // Update SleepTime if it's newer and valid
+  if (entry.SleepTime && entry.SleepTime.trim() !== "") {
+    if (
+      !groups[startTime].latestSleepTimeTimestamp ||
+      entryTimestamp > new Date(groups[startTime].latestSleepTimeTimestamp)
+    ) {
       groups[startTime].sleepTime = entry.SleepTime;
-      groups[startTime].latestTimestamp = entry.timestamp;
+      groups[startTime].latestSleepTimeTimestamp = entry.timestamp;
     }
   }
 
-  // Update latest WakeTime if available
-  if (entry.WakeTime) {
-    const currentLatest = groups[startTime].latestTimestamp
-      ? new Date(groups[startTime].latestTimestamp)
-      : new Date(0);
-    const entryTime = new Date(entry.timestamp.replace(" ", "T"));
-
-    if (entryTime > currentLatest) {
+  // Update WakeTime if it's newer and valid
+  if (entry.WakeTime && entry.WakeTime.trim() !== "") {
+    if (
+      !groups[startTime].latestWakeTimeTimestamp ||
+      entryTimestamp > new Date(groups[startTime].latestWakeTimeTimestamp)
+    ) {
       groups[startTime].wakeTime = entry.WakeTime;
-      groups[startTime].latestTimestamp = entry.timestamp;
+      groups[startTime].latestWakeTimeTimestamp = entry.timestamp;
     }
   }
 
   return groups;
 }, {});
+
 
 
 const sections = Object.keys(groupedEntries).map((startTime) => ({
@@ -146,6 +146,7 @@ const sections = Object.keys(groupedEntries).map((startTime) => ({
   sleepTime: groupedEntries[startTime].sleepTime,
   wakeTime: groupedEntries[startTime].wakeTime,
 }));
+
 
 
 
@@ -395,6 +396,7 @@ const formatDate = (date: Date) => {
 {section.wakeTime && (
   <Text style={styles.sectionHeaderText}>Wake Time: {section.wakeTime}</Text>
 )}
+
       <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
         Status: {hasEnded ? "Completed" : "Ongoing"}
       </Text>
