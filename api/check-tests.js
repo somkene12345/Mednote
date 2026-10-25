@@ -28,16 +28,31 @@ export default async function handler(req, res) {
         const entry = entryArray["0"];
         if (!entry.TestStartTime || !entry.TestEndTime) continue;
 
+        // Parse date properly to avoid local/UTC timezone offsets
         const endTime = new Date(entry.TestEndTime.replace(" ", "T"));
         const diffHours = (endTime - now) / (1000 * 60 * 60);
 
-        // Triggers if test is 2 hours or less remaining, but still ongoing (diffHours > 0)
-        if (diffHours > 0 && diffHours <= 2.0) {
-          const hoursLeft = Math.floor(diffHours);
-          const minutesLeft = Math.floor((diffHours - hoursLeft) * 60);
-          const timeLeftStr = `${hoursLeft} hours and ${minutesLeft} minutes`;
+        // Triggers if test is 3 hours or less remaining, but still ongoing (diffHours > 0)
+        if (diffHours > 0 && diffHours <= 3.0) {
+          const totalMinutesLeft = Math.floor(diffHours * 60);
+          const hoursLeft = Math.floor(totalMinutesLeft / 60);
+          const minutesLeft = totalMinutesLeft % 60;
 
-          await sendTelegramAlert(patientKey, entry.TestEndTime, timeLeftStr);
+          // Format remaining time dynamically
+          let timeLeftStr = "";
+          if (hoursLeft > 0) {
+            const hourWord = hoursLeft === 1 ? "1 hour" : `${hoursLeft} hours`;
+            timeLeftStr = minutesLeft > 0 ? `${hourWord} and ${minutesLeft} minutes` : hourWord;
+          } else {
+            timeLeftStr = `${minutesLeft} minutes`;
+          }
+
+          // Clean patient name: cut out everything after the last minus sign "-"
+          const cleanPatientName = patientKey.includes("-") 
+            ? patientKey.substring(0, patientKey.lastIndexOf("-")).trim() 
+            : patientKey;
+
+          await sendTelegramAlert(cleanPatientName, timeLeftStr);
           alertsSent.push(patientKey);
         }
       }
@@ -50,13 +65,14 @@ export default async function handler(req, res) {
   }
 }
 
-async function sendTelegramAlert(patientName, endTime, timeLeft) {
+async function sendTelegramAlert(patientName, timeLeft) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) return;
 
-  const message = `⚠️ *MedNote Test Alert*\n\nPatient: *${patientName}*\nTest End Time: ${endTime}\n⏳ *Time Remaining:* ${timeLeft}`;
+  // No empty lines between header and details, no emojis
+  const message = `*MedNote Test Alert*\nPatient: *${patientName}*\n*Time Remaining:* ${timeLeft}`;
 
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
