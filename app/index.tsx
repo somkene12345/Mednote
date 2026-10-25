@@ -7,11 +7,27 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  useColorScheme,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { ref, set } from "firebase/database";
 import { database } from "../firebaseConfig";
 
 export default function Index() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const theme = {
+    background: isDark ? '#121212' : '#F4F6F9',
+    surface: isDark ? '#1E1E1E' : '#FFFFFF',
+    text: isDark ? '#E2E8F0' : '#1E293B',
+    subText: isDark ? '#94A3B8' : '#64748B',
+    border: isDark ? '#2D2D2D' : '#E2E8F0',
+    inputBg: isDark ? '#2A2A2A' : '#F8FAFC',
+    primary: '#1D4ED8',
+    primaryLight: isDark ? 'rgba(29, 78, 216, 0.2)' : 'rgba(29, 78, 216, 0.1)',
+  };
+
   const [rows, setRows] = useState([{ action: "", symptom: "", comment: "" }]);
   const [name, setName] = useState("");
   const [hospitalNo, setHospitalNo] = useState("");
@@ -30,19 +46,12 @@ export default function Index() {
   useEffect(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        const savedName = localStorage.getItem("name");
-        const savedHospitalNo = localStorage.getItem("hospitalNo");
-        const savedTestStartTime = localStorage.getItem("testStartTime");
-        const savedSleepTime = localStorage.getItem("sleepTime");
-        const savedWakeTime = localStorage.getItem("wakeTime");
-        const savedTestType = localStorage.getItem("testType");
-
-        if (savedName) setName(savedName);
-        if (savedHospitalNo) setHospitalNo(savedHospitalNo);
-        if (savedTestStartTime) setTestStartTime(savedTestStartTime);
-        if (savedSleepTime) setSleepTime(savedSleepTime);
-        if (savedWakeTime) setWakeTime(savedWakeTime);
-        if (savedTestType) setTestType(savedTestType);
+        if (localStorage.getItem("name")) setName(localStorage.getItem("name") || "");
+        if (localStorage.getItem("hospitalNo")) setHospitalNo(localStorage.getItem("hospitalNo") || "");
+        if (localStorage.getItem("testStartTime")) setTestStartTime(localStorage.getItem("testStartTime") || "");
+        if (localStorage.getItem("sleepTime")) setSleepTime(localStorage.getItem("sleepTime") || "");
+        if (localStorage.getItem("wakeTime")) setWakeTime(localStorage.getItem("wakeTime") || "");
+        if (localStorage.getItem("testType")) setTestType(localStorage.getItem("testType") || "Holter");
       }
     } catch (e) {}
   }, []);
@@ -84,11 +93,7 @@ export default function Index() {
     const currentTime = new Date();
     const minutesDifference = (currentTime.getTime() - startTime.getTime()) / (1000 * 60);
 
-    if (minutesDifference >= testDuration * 60) {
-      setTestEnded(true);
-    } else {
-      setTestEnded(false);
-    }
+    setTestEnded(minutesDifference >= testDuration * 60);
   };
 
   useEffect(() => {
@@ -135,7 +140,7 @@ export default function Index() {
       .filter(Boolean);
 
     if (dataToSave.length === 0) {
-      Alert.alert("Error", "Please complete the activity and symptom fields before submitting.");
+      Alert.alert("Error", "Please fill out the activity and symptom fields.");
       return;
     }
 
@@ -152,13 +157,6 @@ export default function Index() {
       });
   };
 
-  const toggleComments = () => {
-    setShowComments((prev) => !prev);
-    setMenuVisible(false);
-  };
-
-  const toggleMenu = () => setMenuVisible(!menuVisible);
-
   const handlePasswordSubmit = () => {
     if (password === "hellouzoma") {
       setPasswordCorrect(true);
@@ -170,51 +168,49 @@ export default function Index() {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header Patient Info Card */}
-        <View style={styles.glassCard}>
-          <Text style={styles.cardHeaderTitle}>Patient Registration</Text>
-          <View style={styles.headerRow}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Patient Name</Text>
+        
+        {/* Patient Details Card */}
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>Patient Information</Text>
+          <View style={styles.row}>
+            <View style={styles.flexInput}>
+              <Text style={[styles.label, { color: theme.subText }]}>Patient Name</Text>
               <TextInput
-                placeholder="Enter Full Name"
-                placeholderTextColor="#64748B"
-                style={styles.textInput}
+                placeholder="Full Name"
+                placeholderTextColor={theme.subText}
+                style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                 value={name}
                 onChangeText={setName}
                 editable={!testEnded}
-                autoComplete="off"
               />
             </View>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Hospital ID</Text>
+            <View style={styles.flexInput}>
+              <Text style={[styles.label, { color: theme.subText }]}>Hospital ID</Text>
               <TextInput
-                placeholder="Enter Hospital ID"
-                placeholderTextColor="#64748B"
-                style={styles.textInput}
+                placeholder="Hospital ID"
+                placeholderTextColor={theme.subText}
+                style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                 value={hospitalNo}
                 onChangeText={setHospitalNo}
                 editable={!testEnded}
-                autoComplete="off"
               />
             </View>
           </View>
 
-          {/* Time and Test Parameters */}
-          <View style={styles.timeInputRow}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Test Start Time</Text>
+          <View style={[styles.row, { marginTop: 12 }]}>
+            <View style={styles.flexInput}>
+              <Text style={[styles.label, { color: theme.subText }]}>Test Start Time</Text>
               <input
                 type="datetime-local"
                 style={{
                   width: "100%",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  color: "#F8FAFC",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "10px",
-                  padding: "10px",
+                  backgroundColor: isDark ? "#2A2A2A" : "#F8FAFC",
+                  color: isDark ? "#E2E8F0" : "#1E293B",
+                  border: `1px solid ${isDark ? "#2D2D2D" : "#E2E8F0"}`,
+                  borderRadius: "12px",
+                  padding: "12px",
                   fontSize: "14px",
                   outline: "none",
                   boxSizing: "border-box",
@@ -232,16 +228,16 @@ export default function Index() {
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Duration</Text>
+            <View style={styles.flexInput}>
+              <Text style={[styles.label, { color: theme.subText }]}>Duration</Text>
               <select
                 style={{
                   width: "100%",
-                  backgroundColor: "rgba(15, 23, 42, 0.6)",
-                  color: "#F8FAFC",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "10px",
-                  padding: "10px",
+                  backgroundColor: isDark ? "#2A2A2A" : "#F8FAFC",
+                  color: isDark ? "#E2E8F0" : "#1E293B",
+                  border: `1px solid ${isDark ? "#2D2D2D" : "#E2E8F0"}`,
+                  borderRadius: "12px",
+                  padding: "12px",
                   fontSize: "14px",
                   outline: "none",
                   boxSizing: "border-box",
@@ -250,26 +246,26 @@ export default function Index() {
                 onChange={(e: any) => setTestDuration(parseInt(e.target.value))}
                 disabled={testEnded}
               >
-                <option value={24} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>24 Hours</option>
-                <option value={48} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>48 Hours</option>
-                <option value={168} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>7 Days (168 Hours)</option>
+                <option value={24}>24 Hours</option>
+                <option value={48}>48 Hours</option>
+                <option value={168}>7 Days (168 Hours)</option>
               </select>
             </View>
           </View>
 
           {testType === "ABP" && (
-            <View style={styles.timeInputRow}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Sleep Time</Text>
+            <View style={[styles.row, { marginTop: 12 }]}>
+              <View style={styles.flexInput}>
+                <Text style={[styles.label, { color: theme.subText }]}>Sleep Time</Text>
                 <input
                   type="time"
                   style={{
                     width: "100%",
-                    backgroundColor: "rgba(15, 23, 42, 0.6)",
-                    color: "#F8FAFC",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "10px",
-                    padding: "10px",
+                    backgroundColor: isDark ? "#2A2A2A" : "#F8FAFC",
+                    color: isDark ? "#E2E8F0" : "#1E293B",
+                    border: `1px solid ${isDark ? "#2D2D2D" : "#E2E8F0"}`,
+                    borderRadius: "12px",
+                    padding: "12px",
                     fontSize: "14px",
                     outline: "none",
                     boxSizing: "border-box",
@@ -278,17 +274,17 @@ export default function Index() {
                   onChange={(e: any) => setSleepTime(e.target.value)}
                 />
               </View>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Wake Time</Text>
+              <View style={styles.flexInput}>
+                <Text style={[styles.label, { color: theme.subText }]}>Wake Time</Text>
                 <input
                   type="time"
                   style={{
                     width: "100%",
-                    backgroundColor: "rgba(15, 23, 42, 0.6)",
-                    color: "#F8FAFC",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "10px",
-                    padding: "10px",
+                    backgroundColor: isDark ? "#2A2A2A" : "#F8FAFC",
+                    color: isDark ? "#E2E8F0" : "#1E293B",
+                    border: `1px solid ${isDark ? "#2D2D2D" : "#E2E8F0"}`,
+                    borderRadius: "12px",
+                    padding: "12px",
                     fontSize: "14px",
                     outline: "none",
                     boxSizing: "border-box",
@@ -301,34 +297,42 @@ export default function Index() {
           )}
 
           {testStartTime !== "" && (
-            <View style={[styles.statusBadge, testEnded ? styles.statusEnded : styles.statusActive]}>
-              <Text style={styles.statusText}>
-                {testEnded
-                  ? "⚠️ Test Duration Complete (Entry Disabled)"
-                  : `⏳ Active Test ends by: ${calculateTestEndTime(testStartTime)}`}
+            <View style={[styles.banner, testEnded ? styles.bannerEnded : styles.bannerActive]}>
+              <Ionicons
+                name={testEnded ? "alert-circle-outline" : "time-outline"}
+                size={18}
+                color={testEnded ? "#EF4444" : "#1D4ED8"}
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.bannerText, { color: testEnded ? "#EF4444" : "#1D4ED8" }]}>
+                {testEnded ? "Test has ended. Entries disabled." : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
               </Text>
             </View>
           )}
         </View>
 
-        {/* Activity & Symptom Entry Section */}
-        <View style={styles.glassCard}>
+        {/* Symptoms Entry Section */}
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardHeaderTitle}>Symptom Log ({testType} Mode)</Text>
-            <TouchableOpacity style={styles.optionsPill} onPress={toggleMenu}>
-              <Text style={styles.optionsPillText}>⚙️ Options</Text>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Symptoms & Activity Log</Text>
+            <TouchableOpacity
+              style={[styles.optionsButton, { backgroundColor: theme.primaryLight }]}
+              onPress={() => setMenuVisible(!menuVisible)}
+            >
+              <Ionicons name="settings-outline" size={16} color={theme.primary} />
+              <Text style={[styles.optionsButtonText, { color: theme.primary }]}>Options</Text>
             </TouchableOpacity>
           </View>
 
           {rows.map((row, index) => (
-            <View key={index} style={styles.entryRowCard}>
-              <View style={styles.inputsRow}>
+            <View key={index} style={[styles.entrySubCard, { backgroundColor: isDark ? '#181818' : '#F1F5F9' }]}>
+              <View style={styles.row}>
                 <View style={styles.flexInput}>
-                  <Text style={styles.subLabel}>Activity</Text>
+                  <Text style={[styles.subLabel, { color: theme.subText }]}>Activity</Text>
                   <TextInput
-                    placeholder="e.g. Walking up stairs"
-                    placeholderTextColor="#64748B"
-                    style={styles.textInputArea}
+                    placeholder="What are you doing?"
+                    placeholderTextColor={theme.subText}
+                    style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                     value={row.action}
                     multiline
                     onChangeText={(text) => {
@@ -337,15 +341,14 @@ export default function Index() {
                       setRows(updatedRows);
                     }}
                     editable={!testEnded}
-                    autoComplete="off"
                   />
                 </View>
                 <View style={styles.flexInput}>
-                  <Text style={styles.subLabel}>Symptom</Text>
+                  <Text style={[styles.subLabel, { color: theme.subText }]}>Symptom</Text>
                   <TextInput
-                    placeholder="e.g. Chest tightness"
-                    placeholderTextColor="#64748B"
-                    style={styles.textInputArea}
+                    placeholder="What are you feeling?"
+                    placeholderTextColor={theme.subText}
+                    style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                     value={row.symptom}
                     multiline
                     onChangeText={(text) => {
@@ -354,18 +357,17 @@ export default function Index() {
                       setRows(updatedRows);
                     }}
                     editable={!testEnded}
-                    autoComplete="off"
                   />
                 </View>
               </View>
 
               {showComments && (
                 <View style={{ marginTop: 10 }}>
-                  <Text style={styles.subLabel}>Additional Clinical Comments</Text>
+                  <Text style={[styles.subLabel, { color: theme.subText }]}>Comment</Text>
                   <TextInput
-                    placeholder="Enter any additional observations..."
-                    placeholderTextColor="#64748B"
-                    style={styles.textInputArea}
+                    placeholder="Add a comment"
+                    placeholderTextColor={theme.subText}
+                    style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
                     value={row.comment}
                     multiline
                     onChangeText={(text) => {
@@ -374,7 +376,6 @@ export default function Index() {
                       setRows(updatedRows);
                     }}
                     editable={!testEnded}
-                    autoComplete="off"
                   />
                 </View>
               )}
@@ -382,23 +383,33 @@ export default function Index() {
           ))}
 
           <TouchableOpacity
-            style={[styles.primarySubmitBtn, testEnded && { opacity: 0.5 }]}
+            style={[styles.submitButton, { backgroundColor: theme.primary }, testEnded && { opacity: 0.5 }]}
             onPress={saveData}
             disabled={testEnded}
           >
-            <Text style={styles.primarySubmitBtnText}>Submit Patient Log Entry</Text>
+            <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.submitButtonText}>Submit Entry</Text>
           </TouchableOpacity>
         </View>
+
       </ScrollView>
 
-      {/* Popover Options Menu */}
+      {/* Options Menu Modal Popup */}
       {menuVisible && (
-        <View style={styles.menuOverlay}>
-          <View style={styles.menuCard}>
-            <Text style={styles.menuTitle}>Configuration Menu</Text>
-            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
-              <Text style={styles.menuItemText}>
-                {showComments ? "🙈 Hide Comments Field" : "💬 Add Comments Field"}
+        <View style={styles.modalOverlay}>
+          <View style={[styles.menuCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.menuHeader, { color: theme.text }]}>Configuration Menu</Text>
+            
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setShowComments(!showComments);
+                setMenuVisible(false);
+              }}
+            >
+              <Ionicons name="chatbox-outline" size={18} color={theme.primary} />
+              <Text style={[styles.menuItemText, { color: theme.text }]}>
+                {showComments ? "Hide Comments Field" : "Add Comments Field"}
               </Text>
             </TouchableOpacity>
 
@@ -409,39 +420,49 @@ export default function Index() {
                 setMenuVisible(false);
               }}
             >
-              <Text style={styles.menuItemText}>
-                🔄 Switch to {testType === "Holter" ? "ABP" : "Holter"} Mode
+              <Ionicons name="swap-horizontal-outline" size={18} color={theme.primary} />
+              <Text style={[styles.menuItemText, { color: theme.text }]}>
+                Switch to {testType === "Holter" ? "ABP" : "Holter"} Mode
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} onPress={() => setMenuVisible(false)}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => setMenuVisible(false)}>
+              <Ionicons name="close-outline" size={18} color="#EF4444" />
               <Text style={[styles.menuItemText, { color: "#EF4444" }]}>Close Menu</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Password Authorization Modal */}
+      {/* Password Verification Modal */}
       {modalVisible && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Security Authorization</Text>
-            <Text style={styles.modalSubtitle}>Enter passcode to modify test schedule parameters.</Text>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Passcode Verification</Text>
+            <Text style={[styles.modalSub, { color: theme.subText }]}>Enter passcode to change test parameters.</Text>
+            
             <TextInput
-              style={styles.modalInput}
-              placeholder="Enter Password"
-              placeholderTextColor="#64748B"
+              style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]}
+              placeholder="Enter passcode"
+              placeholderTextColor={theme.subText}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              autoComplete="off"
             />
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalBtnText}>Cancel</Text>
+            
+            <View style={styles.row}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: isDark ? '#333' : '#E2E8F0', marginRight: 8 }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirmBtn} onPress={handlePasswordSubmit}>
-                <Text style={styles.modalBtnText}>Authenticate</Text>
+              
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: theme.primary, marginLeft: 8 }]}
+                onPress={handlePasswordSubmit}
+              >
+                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -454,177 +475,102 @@ export default function Index() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: "#0F172A",
   },
   scrollContent: {
     padding: 16,
   },
-  glassCard: {
-    backgroundColor: "rgba(30, 41, 59, 0.7)",
+  card: {
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardHeaderTitle: {
+  cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#F8FAFC",
     marginBottom: 14,
-    letterSpacing: 0.3,
   },
   cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 12,
   },
-  headerRow: {
+  row: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 12,
-  },
-  timeInputRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 12,
-  },
-  inputGroup: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#94A3B8",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  subLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#38BDF8",
-    marginBottom: 6,
-  },
-  textInput: {
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
-    color: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-  },
-  entryRowCard: {
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-  },
-  inputsRow: {
-    flexDirection: "row",
-    gap: 10,
   },
   flexInput: {
     flex: 1,
   },
-  textInputArea: {
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
-    color: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 8,
-    padding: 10,
+  label: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  subLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    marginBottom: 4,
+  },
+  textInput: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 14,
-    minHeight: 45,
+    borderWidth: 1,
   },
-  statusBadge: {
-    padding: 10,
-    borderRadius: 8,
+  entrySubCard: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  banner: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 6,
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 12,
   },
-  statusActive: {
-    backgroundColor: "rgba(14, 165, 233, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(56, 189, 248, 0.3)",
+  bannerActive: {
+    backgroundColor: "rgba(29, 78, 216, 0.1)",
   },
-  statusEnded: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+  bannerEnded: {
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
   },
-  statusText: {
-    color: "#F8FAFC",
+  bannerText: {
     fontSize: 13,
     fontWeight: "600",
   },
-  primarySubmitBtn: {
-    backgroundColor: "#0284C7",
-    paddingVertical: 14,
-    borderRadius: 10,
+  optionsButton: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
-    shadowColor: "#0284C7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  primarySubmitBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  optionsPill: {
-    backgroundColor: "rgba(56, 189, 248, 0.15)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(56, 189, 248, 0.3)",
   },
-  optionsPillText: {
-    color: "#38BDF8",
+  optionsButtonText: {
+    fontSize: 13,
     fontWeight: "600",
-    fontSize: 12,
+    marginLeft: 4,
   },
-  menuOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
+  submitButton: {
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
   },
-  menuCard: {
-    width: "85%",
-    backgroundColor: "#1E293B",
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#F8FAFC",
-    marginBottom: 14,
-  },
-  menuItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
-  },
-  menuItemText: {
-    color: "#38BDF8",
-    fontSize: 14,
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "600",
   },
   modalOverlay: {
@@ -633,62 +579,57 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.85)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
+  menuCard: {
+    width: "100%",
+    maxWidth: 320,
+    borderRadius: 16,
+    padding: 16,
+  },
+  menuHeader: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  menuItemText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 12,
+  },
   modalCard: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "#1E293B",
+    maxWidth: 340,
     borderRadius: 16,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    padding: 20,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#F8FAFC",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  modalSubtitle: {
+  modalSub: {
     fontSize: 13,
-    color: "#94A3B8",
     marginBottom: 16,
   },
-  modalInput: {
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
-    color: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-    marginBottom: 18,
-  },
-  modalBtnRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalCancelBtn: {
-    flex: 1,
-    backgroundColor: "#334155",
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  modalConfirmBtn: {
-    flex: 1,
-    backgroundColor: "#0284C7",
-    paddingVertical: 12,
-    borderRadius: 8,
     alignItems: "center",
   },
   modalBtnText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
     fontSize: 14,
+    fontWeight: "600",
   },
 });
