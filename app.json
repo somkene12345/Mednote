@@ -30,6 +30,13 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "pwa": {
+        "enabled": true,
+        "themeColor": "#007AFF",
+        "backgroundColor": "#f8f8f8",
+        "display": "standalone",
+        "shortName": "MedNote"
+      },
     "plugins": [
       "expo-router",
       [
