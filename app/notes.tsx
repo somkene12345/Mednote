@@ -9,11 +9,27 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  useColorScheme,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { database } from "../firebaseConfig";
 import { ref, get, remove } from "firebase/database";
 
 export default function SearchPatientNotes() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const theme = {
+    background: isDark ? '#121212' : '#F4F6F9',
+    surface: isDark ? '#1E1E1E' : '#FFFFFF',
+    text: isDark ? '#E2E8F0' : '#1E293B',
+    subText: isDark ? '#94A3B8' : '#64748B',
+    border: isDark ? '#2D2D2D' : '#E2E8F0',
+    inputBg: isDark ? '#2A2A2A' : '#F8FAFC',
+    primary: '#1D4ED8',
+    dangerBg: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,10 +101,7 @@ export default function SearchPatientNotes() {
             return {
               timestamp,
               ...entry,
-              calculatedDuration: calculateDurationHours(
-                entry.TestStartTime,
-                entry.TestEndTime
-              ),
+              calculatedDuration: calculateDurationHours(entry.TestStartTime, entry.TestEndTime),
             };
           })
           .reduce((groups: any, entry) => {
@@ -205,20 +218,22 @@ export default function SearchPatientNotes() {
 
   if (!authenticated) {
     return (
-      <View style={styles.authContainer}>
-        <View style={styles.authGlassCard}>
-          <Text style={styles.authHeaderTitle}>🔒 Security Access Required</Text>
-          <Text style={styles.authSubText}>Enter password to query patient notes database.</Text>
+      <View style={[styles.authContainer, { backgroundColor: theme.background }]}>
+        <View style={[styles.authCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.authTitle, { color: theme.text }]}>Security Verification</Text>
+          <Text style={[styles.authSub, { color: theme.subText }]}>Enter passcode to view patient records.</Text>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border, marginBottom: 16 }]}
             secureTextEntry
-            placeholder="Enter Passcode"
-            placeholderTextColor="#64748B"
+            placeholder="Enter passcode"
+            placeholderTextColor={theme.subText}
             value={password}
             onChangeText={setPassword}
-            autoComplete="off"
           />
-          <TouchableOpacity style={styles.primaryBtn} onPress={handlePasswordSubmit}>
+          <TouchableOpacity
+            style={[styles.primaryBtn, { backgroundColor: theme.primary }]}
+            onPress={handlePasswordSubmit}
+          >
             <Text style={styles.primaryBtnText}>Authenticate</Text>
           </TouchableOpacity>
         </View>
@@ -227,42 +242,46 @@ export default function SearchPatientNotes() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Search Header Bar */}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.searchRow}>
         <TextInput
-          style={[styles.textInput, { flex: 1 }]}
-          placeholder="Search by patient name or hospital ID..."
-          placeholderTextColor="#64748B"
+          style={[styles.textInput, { flex: 1, backgroundColor: theme.surface, color: theme.text, borderColor: theme.border }]}
+          placeholder="Search patient or hospital ID..."
+          placeholderTextColor={theme.subText}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={() => fetchPatientsData(searchQuery)}
-          autoComplete="off"
         />
-        <TouchableOpacity style={styles.searchBtn} onPress={() => fetchPatientsData(searchQuery)}>
-          <Text style={styles.searchBtnText}>🔍</Text>
+        <TouchableOpacity
+          style={[styles.searchBtn, { backgroundColor: theme.primary }]}
+          onPress={() => fetchPatientsData(searchQuery)}
+        >
+          <Ionicons name="search" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color="#38BDF8" />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       ) : (
         <FlatList
           data={patients}
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
-            <View style={styles.patientCard}>
+            <View style={[styles.patientCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.patientCardHeader}>
                 <TouchableOpacity style={{ flex: 1 }} onPress={() => togglePatientDetails(item.key)}>
-                  <Text style={styles.patientNameText}>{item.key}</Text>
-                  <Text style={styles.recordCountText}>
-                    {expandedPatient === item.key ? "Tap to collapse" : "Tap to expand patient records"}
+                  <Text style={[styles.patientNameText, { color: theme.text }]}>{item.key}</Text>
+                  <Text style={[styles.recordCountText, { color: theme.subText }]}>
+                    {expandedPatient === item.key ? "Tap to collapse" : "Tap to expand logs"}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteIconButton} onPress={() => confirmDeletePatient(item.key)}>
-                  <Text style={{ fontSize: 16 }}>🗑️</Text>
+                <TouchableOpacity
+                  style={[styles.deleteIconButton, { backgroundColor: theme.dangerBg }]}
+                  onPress={() => confirmDeletePatient(item.key)}
+                >
+                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
                 </TouchableOpacity>
               </View>
 
@@ -277,13 +296,12 @@ export default function SearchPatientNotes() {
                         startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000
                       );
                       const hasEnded = new Date() > endTime;
-
                       const testType = section.data?.[0]?.TestType || "Holter";
 
                       return (
-                        <View style={styles.sectionHeaderCard}>
+                        <View style={[styles.sectionHeaderCard, { backgroundColor: isDark ? '#242424' : '#F8FAFC', borderColor: theme.border }]}>
                           <View style={styles.sectionBadgeRow}>
-                            <Text style={styles.testTypeBadge}>{testType} Test</Text>
+                            <Text style={[styles.testTypeBadge, { color: theme.primary }]}>{testType} Test</Text>
                             <Text
                               style={[
                                 styles.statusBadgeText,
@@ -294,38 +312,32 @@ export default function SearchPatientNotes() {
                             </Text>
                           </View>
 
-                          <Text style={styles.sectionMetaText}>Start: {formatTimestamp(section.title)}</Text>
-                          <Text style={styles.sectionMetaText}>
-                            Duration: {section.testDuration || 24} Hours
-                          </Text>
-                          {section.sleepTime && (
-                            <Text style={styles.sectionMetaText}>Sleep Window: {section.sleepTime}</Text>
-                          )}
-                          {section.wakeTime && (
-                            <Text style={styles.sectionMetaText}>Wake Window: {section.wakeTime}</Text>
-                          )}
+                          <Text style={[styles.sectionMetaText, { color: theme.subText }]}>Start: {formatTimestamp(section.title)}</Text>
+                          <Text style={[styles.sectionMetaText, { color: theme.subText }]}>Duration: {section.testDuration || 24} Hours</Text>
+                          {section.sleepTime && <Text style={[styles.sectionMetaText, { color: theme.subText }]}>Sleep: {section.sleepTime}</Text>}
+                          {section.wakeTime && <Text style={[styles.sectionMetaText, { color: theme.subText }]}>Wake: {section.wakeTime}</Text>}
                         </View>
                       );
                     }}
                     renderItem={({ item }) => (
-                      <View style={styles.noteEntryCard}>
-                        <Text style={styles.noteTime}>{formatTimestamp(item.timestamp)}</Text>
-                        <Text style={styles.noteText}>
-                          <Text style={styles.noteLabel}>Activity: </Text>
+                      <View style={[styles.noteEntryCard, { backgroundColor: isDark ? '#2A2A2A' : '#FFFFFF', borderLeftColor: theme.primary }]}>
+                        <Text style={[styles.noteTime, { color: theme.subText }]}>{formatTimestamp(item.timestamp)}</Text>
+                        <Text style={[styles.noteText, { color: theme.text }]}>
+                          <Text style={{ fontWeight: "600" }}>Activity: </Text>
                           {item.Activity}
                         </Text>
-                        <Text style={styles.noteText}>
-                          <Text style={styles.noteLabel}>Symptom: </Text>
+                        <Text style={[styles.noteText, { color: theme.text }]}>
+                          <Text style={{ fontWeight: "600" }}>Symptom: </Text>
                           {item.Symptom}
                         </Text>
                         {item.Comment && item.Comment.trim() !== "" && (
-                          <Text style={styles.noteText}>
-                            <Text style={styles.noteLabel}>Comment: </Text>
+                          <Text style={[styles.noteText, { color: theme.text }]}>
+                            <Text style={{ fontWeight: "600" }}>Comment: </Text>
                             {item.Comment}
                           </Text>
                         )}
                         <TouchableOpacity
-                          style={styles.deleteEntryBtn}
+                          style={[styles.deleteEntryBtn, { backgroundColor: theme.dangerBg }]}
                           onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
                         >
                           <Text style={styles.deleteEntryBtnText}>Delete Log</Text>
@@ -340,25 +352,28 @@ export default function SearchPatientNotes() {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       {modalVisible && (
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
               {modalType === "patient" ? "Delete Patient Record?" : "Delete Log Entry?"}
             </Text>
-            <Text style={styles.modalSubtitle}>
+            <Text style={[styles.modalSub, { color: theme.subText }]}>
               {modalType === "patient"
-                ? `This will permanently remove all medical data stored for ${selectedPatientKey}.`
-                : "Are you sure you want to delete this specific timestamped log entry?"}
+                ? `This will permanently remove records for ${selectedPatientKey}.`
+                : "Are you sure you want to delete this specific log entry?"}
             </Text>
 
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalBtnText}>Cancel</Text>
-              </TouchableOpacity>
+            <View style={styles.row}>
               <TouchableOpacity
-                style={styles.modalDeleteBtn}
+                style={[styles.modalBtn, { backgroundColor: isDark ? '#333' : '#E2E8F0', marginRight: 8 }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[styles.modalBtnText, { color: theme.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#EF4444", marginLeft: 8 }]}
                 onPress={() => {
                   if (modalType === "patient" && selectedPatientKey) {
                     deletePatient(selectedPatientKey);
@@ -368,7 +383,7 @@ export default function SearchPatientNotes() {
                   setModalVisible(false);
                 }}
               >
-                <Text style={styles.modalBtnText}>Confirm Delete</Text>
+                <Text style={[styles.modalBtnText, { color: '#FFFFFF' }]}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -381,34 +396,28 @@ export default function SearchPatientNotes() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
     padding: 16,
   },
   authContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#0F172A",
     padding: 20,
   },
-  authGlassCard: {
+  authCard: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "rgba(30, 41, 59, 0.7)",
+    maxWidth: 360,
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
   },
-  authHeaderTitle: {
+  authTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#F8FAFC",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  authSubText: {
+  authSub: {
     fontSize: 13,
-    color: "#94A3B8",
     marginBottom: 16,
   },
   searchRow: {
@@ -417,61 +426,45 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   textInput: {
-    backgroundColor: "rgba(30, 41, 59, 0.7)",
-    color: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
+    borderWidth: 1,
   },
   searchBtn: {
-    backgroundColor: "#0284C7",
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
-  searchBtnText: {
-    fontSize: 16,
-  },
   patientCard: {
-    backgroundColor: "rgba(30, 41, 59, 0.7)",
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
   },
   patientCardHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
   patientNameText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "700",
-    color: "#F8FAFC",
   },
   recordCountText: {
     fontSize: 12,
-    color: "#38BDF8",
     marginTop: 2,
   },
   deleteIconButton: {
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
     padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.3)",
+    borderRadius: 10,
   },
   sectionHeaderCard: {
-    backgroundColor: "rgba(15, 23, 42, 0.6)",
     padding: 12,
     borderRadius: 10,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
   },
   sectionBadgeRow: {
     flexDirection: "row",
@@ -481,77 +474,64 @@ const styles = StyleSheet.create({
   testTypeBadge: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#38BDF8",
     textTransform: "uppercase",
   },
   statusBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   statusOngoing: {
-    color: "#34D399",
-    backgroundColor: "rgba(52, 211, 153, 0.15)",
+    color: "#10B981",
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
   },
   statusCompleted: {
-    color: "#F87171",
-    backgroundColor: "rgba(248, 113, 113, 0.15)",
+    color: "#EF4444",
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
   },
   sectionMetaText: {
     fontSize: 13,
-    color: "#94A3B8",
     marginTop: 2,
   },
   noteEntryCard: {
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
     marginLeft: 8,
     borderLeftWidth: 3,
-    borderLeftColor: "#38BDF8",
   },
   noteTime: {
     fontSize: 11,
-    fontWeight: "600",
-    color: "#64748B",
+    fontWeight: "500",
     marginBottom: 4,
   },
   noteText: {
     fontSize: 14,
-    color: "#F8FAFC",
     marginBottom: 4,
-  },
-  noteLabel: {
-    color: "#94A3B8",
-    fontWeight: "600",
   },
   deleteEntryBtn: {
     alignSelf: "flex-start",
     marginTop: 6,
-    backgroundColor: "rgba(239, 68, 68, 0.15)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   deleteEntryBtnText: {
-    color: "#F87171",
+    color: "#EF4444",
     fontSize: 12,
     fontWeight: "600",
   },
   primaryBtn: {
-    backgroundColor: "#0284C7",
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 8,
   },
   primaryBtnText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   modalOverlay: {
     position: "absolute",
@@ -559,52 +539,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(15, 23, 42, 0.85)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   modalCard: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "#1E293B",
+    maxWidth: 340,
     borderRadius: 16,
     padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#F8FAFC",
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  modalSubtitle: {
+  modalSub: {
     fontSize: 13,
-    color: "#94A3B8",
     marginBottom: 16,
   },
-  modalBtnRow: {
+  row: {
     flexDirection: "row",
-    gap: 12,
   },
-  modalCancelBtn: {
+  modalBtn: {
     flex: 1,
-    backgroundColor: "#334155",
     paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  modalDeleteBtn: {
-    flex: 1,
-    backgroundColor: "#DC2626",
-    paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
   },
   modalBtnText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
     fontSize: 14,
+    fontWeight: "600",
   },
 });
