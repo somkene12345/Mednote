@@ -1,33 +1,23 @@
 export default async function handler(req, res) {
-  console.log("--- Check-tests cron job started ---");
-  
   try {
     const projectId = "mednote-9e0d4";
     const dbUrl = `https://${projectId}-default-rtdb.firebaseio.com/entries.json`;
     
-    console.log(`Fetching database from: ${dbUrl}`);
     const response = await fetch(dbUrl);
-
     if (!response.ok) {
-      console.error(`Firebase error status: ${response.status}`);
       throw new Error(`Firebase HTTP error! Status: ${response.status}`);
     }
 
     const data = await response.json();
-
     if (!data) {
-      console.log("Database returned empty or null data.");
-      return res.status(200).json({ message: "No entries found in database." });
+      return res.status(200).json({ success: true, message: "No entries found." });
     }
 
     const now = new Date();
-    console.log(`Current Server Time: ${now.toISOString()}`);
-    
     const alertsSent = [];
 
     for (const patientKey of Object.keys(data)) {
       const patientData = data[patientKey];
-      console.log(`Checking patient: ${patientKey}`);
 
       for (const timestamp of Object.keys(patientData)) {
         if (timestamp === "TestDetails" || timestamp === "key") continue;
@@ -41,37 +31,34 @@ export default async function handler(req, res) {
         const endTime = new Date(entry.TestEndTime.replace(" ", "T"));
         const diffHours = (endTime - now) / (1000 * 60 * 60);
 
-        console.log(`-> Patient ${patientKey} | Ends at: ${entry.TestEndTime} | Hours remaining: ${diffHours.toFixed(2)}`);
+        // Triggers if test is 2 hours or less remaining, but still ongoing (diffHours > 0)
+        if (diffHours > 0 && diffHours <= 2.0) {
+          const hoursLeft = Math.floor(diffHours);
+          const minutesLeft = Math.floor((diffHours - hoursLeft) * 60);
+          const timeLeftStr = `${hoursLeft} hours and ${minutesLeft} minutes`;
 
-        // Check window (between 1.75 and 2.0 hours remaining)
-        if (diffHours >= 1.75 && diffHours <= 2.0) {
-          console.log(`Target window hit for ${patientKey}! Sending Telegram alert...`);
-          await sendTelegramAlert(patientKey, entry.TestEndTime);
+          await sendTelegramAlert(patientKey, entry.TestEndTime, timeLeftStr);
           alertsSent.push(patientKey);
         }
       }
     }
 
-    console.log(`Job finished successfully. Alerts sent: ${alertsSent.length}`);
     return res.status(200).json({ success: true, alertsSent });
   } catch (error) {
-    console.error("Cron Error Caught:", error.message);
-    return res.status(500).json({ error: error.message });
+    console.error("Cron Error:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 }
 
-async function sendTelegramAlert(patientName, endTime) {
+async function sendTelegramAlert(patientName, endTime, timeLeft) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  if (!token || !chatId) {
-    console.error("Telegram Error: Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID environment variables!");
-    return;
-  }
+  if (!token || !chatId) return;
 
-  const message = `⚠️ *MedNote Test Alert*\n\nPatient: *${patientName}*\nTest End Time: ${endTime}\n\nThis test ends in approximately 2 hours.`;
+  const message = `⚠️ *MedNote Test Alert*\n\nPatient: *${patientName}*\nTest End Time: ${endTime}\n⏳ *Time Remaining:* ${timeLeft}`;
 
-  const tgResponse = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -80,11 +67,4 @@ async function sendTelegramAlert(patientName, endTime) {
       parse_mode: "Markdown",
     }),
   });
-
-  const tgResult = await tgResponse.json();
-  if (!tgResult.ok) {
-    console.error("Telegram API Failed:", tgResult);
-  } else {
-    console.log("Telegram API Success:", tgResult);
-  }
 }
