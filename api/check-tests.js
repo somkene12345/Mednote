@@ -1,28 +1,26 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getDatabase, ref, get } from "firebase/database";
-
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-};
-
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
 export default async function handler(req, res) {
   try {
-    const db = getDatabase();
-    const snapshot = await get(ref(db, "entries"));
-    const data = snapshot.val();
+    // Hardcoded your project ID from app.json so it doesn't rely on process.env for Firebase
+    const projectId = "mednote-9e0d4";
     
-    if (!data) return res.status(200).json({ message: "No entries found." });
+    // Fetch entries directly from Realtime Database using REST API
+    const dbUrl = `https://${projectId}-default-rtdb.firebaseio.com/entries.json`;
+    const response = await fetch(dbUrl);
+
+    if (!response.ok) {
+      throw new Error(`Firebase HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data) {
+      return res.status(200).json({ message: "No entries found in database." });
+    }
 
     const now = new Date();
     const alertsSent = [];
 
+    // Iterate over patient records
     for (const patientKey of Object.keys(data)) {
       const patientData = data[patientKey];
 
@@ -38,7 +36,7 @@ export default async function handler(req, res) {
         const endTime = new Date(entry.TestEndTime.replace(" ", "T"));
         const diffHours = (endTime - now) / (1000 * 60 * 60);
 
-        // Send alert if the test ends in ~2 hours (between 1.75 and 2 hours remaining)
+        // Check window (between 1.75 and 2.0 hours remaining)
         if (diffHours >= 1.75 && diffHours <= 2.0) {
           await sendTelegramAlert(patientKey, entry.TestEndTime);
           alertsSent.push(patientKey);
@@ -48,7 +46,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, alertsSent });
   } catch (error) {
-    console.error(error);
+    console.error("Cron Error:", error);
     return res.status(500).json({ error: error.message });
   }
 }
