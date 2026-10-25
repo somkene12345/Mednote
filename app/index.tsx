@@ -17,7 +17,7 @@ export default function Index() {
   const [hospitalNo, setHospitalNo] = useState("");
   const [testStartTime, setTestStartTime] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [testDuration, setTestDuration] = useState(24); // Default to 24 hours
+  const [testDuration, setTestDuration] = useState(24);
   const [menuVisible, setMenuVisible] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -27,59 +27,62 @@ export default function Index() {
   const [sleepTime, setSleepTime] = useState("");
   const [wakeTime, setWakeTime] = useState("");
 
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const savedName = localStorage.getItem("name");
+        const savedHospitalNo = localStorage.getItem("hospitalNo");
+        const savedTestStartTime = localStorage.getItem("testStartTime");
+        const savedSleepTime = localStorage.getItem("sleepTime");
+        const savedWakeTime = localStorage.getItem("wakeTime");
+        const savedTestType = localStorage.getItem("testType");
 
-useEffect(() => {
-  const savedName = localStorage.getItem("name");
-  const savedHospitalNo = localStorage.getItem("hospitalNo");
-  const savedTestStartTime = localStorage.getItem("testStartTime");
-  const savedSleepTime = localStorage.getItem("sleepTime");
-  const savedWakeTime = localStorage.getItem("wakeTime");
-  const savedTestType = localStorage.getItem("testType");
+        if (savedName) setName(savedName);
+        if (savedHospitalNo) setHospitalNo(savedHospitalNo);
+        if (savedTestStartTime) setTestStartTime(savedTestStartTime);
+        if (savedSleepTime) setSleepTime(savedSleepTime);
+        if (savedWakeTime) setWakeTime(savedWakeTime);
+        if (savedTestType) setTestType(savedTestType);
+      }
+    } catch (e) {}
+  }, []);
 
-  if (savedName) setName(savedName);
-  if (savedHospitalNo) setHospitalNo(savedHospitalNo);
-  if (savedTestStartTime) setTestStartTime(savedTestStartTime);
-  if (savedSleepTime) setSleepTime(savedSleepTime);
-  if (savedWakeTime) setWakeTime(savedWakeTime);
-  if (savedTestType) setTestType(savedTestType);
-}, []);
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.setItem("name", name);
+        localStorage.setItem("hospitalNo", hospitalNo);
+        localStorage.setItem("testStartTime", testStartTime);
+        localStorage.setItem("sleepTime", sleepTime);
+        localStorage.setItem("wakeTime", wakeTime);
+        localStorage.setItem("testType", testType);
+      }
+    } catch (e) {}
+  }, [name, hospitalNo, testStartTime, sleepTime, wakeTime, testType]);
 
+  const calculateTestEndTime = (startTime: string) => {
+    if (!startTime) return "";
+    const startDate = new Date(startTime);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + testDuration);
 
-useEffect(() => {
-  localStorage.setItem("name", name);
-  localStorage.setItem("hospitalNo", hospitalNo);
-  localStorage.setItem("testStartTime", testStartTime);
-  localStorage.setItem("sleepTime", sleepTime);
-  localStorage.setItem("wakeTime", wakeTime);
-  localStorage.setItem("testType", testType);
-}, [name, hospitalNo, testStartTime, sleepTime, wakeTime, testType]);
+    const month = String(endDate.getMonth() + 1).padStart(2, "0");
+    const day = String(endDate.getDate()).padStart(2, "0");
+    const year = endDate.getFullYear();
+    const timePart = endDate.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
 
-const calculateTestEndTime = (startTime) => {
-  const startDate = new Date(startTime);
-  const endDate = new Date(startDate);
-  endDate.setHours(startDate.getHours() + testDuration);
-
-  const month = String(endDate.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
-  const day = String(endDate.getDate()).padStart(2, "0");
-  const year = endDate.getFullYear();
-  const datePart = `${month}/${day}/${year}`;
-
-  const timePart = endDate.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${datePart} ${timePart}`;
-};
-
+    return `${month}/${day}/${year} ${timePart}`;
+  };
 
   const checkTestEnd = () => {
     if (!testStartTime) return;
-
     const startTime = new Date(testStartTime);
     const currentTime = new Date();
-    const minutesDifference = (currentTime - startTime) / (1000 * 60);
+    const minutesDifference = (currentTime.getTime() - startTime.getTime()) / (1000 * 60);
 
     if (minutesDifference >= testDuration * 60) {
       setTestEnded(true);
@@ -103,7 +106,7 @@ const calculateTestEndTime = (startTime) => {
       return;
     }
 
-    const groupKey = `${name}-${hospitalNo}`;
+    const groupKey = `${name.trim()}-${hospitalNo.trim()}`;
     const timestamp = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     const adjustedTestStartTime = new Date(testStartTime);
@@ -116,24 +119,23 @@ const calculateTestEndTime = (startTime) => {
           const endDate = new Date(startDate);
           endDate.setHours(startDate.getHours() + testDuration);
 
-return {
-  Activity: row.action,
-  Symptom: row.symptom,
-  Comment: row.comment,
-  TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
-  TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
-  TestType: testType,
-  SleepTime: testType === "ABP" ? sleepTime : "",
-  WakeTime: testType === "ABP" ? wakeTime : "",
-};
-
+          return {
+            Activity: row.action,
+            Symptom: row.symptom,
+            Comment: row.comment,
+            TestStartTime: adjustedTestStartTime.toISOString().slice(0, 16).replace("T", " "),
+            TestEndTime: endDate.toISOString().slice(0, 16).replace("T", " "),
+            TestType: testType,
+            SleepTime: testType === "ABP" ? sleepTime : "",
+            WakeTime: testType === "ABP" ? wakeTime : "",
+          };
         }
         return null;
       })
       .filter(Boolean);
 
     if (dataToSave.length === 0) {
-      Alert.alert("Error", "Please complete the rows before submitting.");
+      Alert.alert("Error", "Please complete the activity and symptom fields before submitting.");
       return;
     }
 
@@ -161,229 +163,287 @@ return {
     if (password === "hellouzoma") {
       setPasswordCorrect(true);
       setModalVisible(false);
+      setPassword("");
     } else {
       Alert.alert("Error", "Incorrect password. Please try again.");
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.headerContainer}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Name:</Text>
-          <TextInput
-            placeholder="Enter Your Name"
-            style={styles.headerInput}
-            value={name}
-            onChangeText={setName}
-            editable={!testEnded}
-          />
-        </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hospital Id:</Text>
-          <TextInput
-            placeholder="Enter Your Hospital Id"
-            style={styles.headerInput}
-            value={hospitalNo}
-            onChangeText={setHospitalNo}
-            editable={!testEnded}
-          />
-        </View>
-      </View>
-
-<View style={styles.timeInputRow}>
-  <View style={styles.timeInputContainer}>
-    <Text style={styles.labelTi}>Test Start Time:</Text>
-    <Text style={styles.teStTi}>
-      <input
-        type="datetime-local"
-        style={styles.inputit}
-        value={testStartTime}
-        onChange={(e) => {
-          const adjustedTime = new Date(e.target.value);
-          adjustedTime.setHours(adjustedTime.getHours() + 1);
-          setTestStartTime(adjustedTime.toISOString().slice(0, 16));
-          setPasswordCorrect(false);
-        }}
-        onFocus={() => {
-          if (!passwordCorrect) setModalVisible(true);
-        }}
-      />
-    </Text>
-  </View>
-
-  <View style={styles.timeInputContainer}>
-    <Text style={styles.labelTi}>Test Duration:</Text>
-    <select
-      style={styles.tetTi}
-      value={testDuration}
-      onChange={(e) => setTestDuration(parseInt(e.target.value))}
-      disabled={testEnded}
-    >
-      <option value={24}>24 Hours</option>
-      <option value={48}>48 Hours</option>
-      <option value={168}>7 Days</option>
-    </select>
-  </View>
-</View>
-{testType === "ABP" && (
-  <>
-<View style={{ flexDirection: "row", gap: 10 }}>
-  <View style={{ flex: 1 }}>
-    <Text style={styles.labelTi}>Sleep Time:</Text>
-    <input
-      type="time"
-      style={styles.inputit}
-      value={sleepTime}
-      onChange={(e) => setSleepTime(e.target.value)}
-    />
-  </View>
-  <View style={{ flex: 1 }}>
-    <Text style={styles.labelTi}>Wake Time:</Text>
-    <input
-      type="time"
-      style={styles.inputit}
-      value={wakeTime}
-      onChange={(e) => setWakeTime(e.target.value)}
-    />
-  </View>
-</View>
-  </>
-)}
-      {testStartTime && (
-        <Text style={testEnded ? styles.testEnded : styles.testEndTime}>
-          {testEnded
-            ? "Test has ended. You cannot add another entry."
-            : `Test ends by: ${calculateTestEndTime(testStartTime)}`}
-        </Text>
-      )}
-
-
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.tableContainer}>
-          <View style={styles.tableHeader}>
-            <Text style={styles.headerText}>Activity</Text>
-            <Text style={styles.headerText}>Symptom</Text>
+    <View style={styles.mainContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header Patient Info Card */}
+        <View style={styles.glassCard}>
+          <Text style={styles.cardHeaderTitle}>Patient Registration</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Patient Name</Text>
+              <TextInput
+                placeholder="Enter Full Name"
+                placeholderTextColor="#64748B"
+                style={styles.textInput}
+                value={name}
+                onChangeText={setName}
+                editable={!testEnded}
+                autoComplete="off"
+              />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Hospital ID</Text>
+              <TextInput
+                placeholder="Enter Hospital ID"
+                placeholderTextColor="#64748B"
+                style={styles.textInput}
+                value={hospitalNo}
+                onChangeText={setHospitalNo}
+                editable={!testEnded}
+                autoComplete="off"
+              />
+            </View>
           </View>
-          {rows.map((row, index) => (
-            <View key={index} style={styles.tableRow}>
-              <View style={styles.rowTop}>
-                <TextInput
-                  placeholder="What are you doing?"
-                  style={styles.input}
-                  value={row.action}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].action = text;
-                    setRows(updatedRows);
+
+          {/* Time and Test Parameters */}
+          <View style={styles.timeInputRow}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Test Start Time</Text>
+              <input
+                type="datetime-local"
+                style={{
+                  width: "100%",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  color: "#F8FAFC",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "10px",
+                  padding: "10px",
+                  fontSize: "14px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                value={testStartTime}
+                onChange={(e: any) => {
+                  const adjustedTime = new Date(e.target.value);
+                  adjustedTime.setHours(adjustedTime.getHours() + 1);
+                  setTestStartTime(adjustedTime.toISOString().slice(0, 16));
+                  setPasswordCorrect(false);
+                }}
+                onFocus={() => {
+                  if (!passwordCorrect) setModalVisible(true);
+                }}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Duration</Text>
+              <select
+                style={{
+                  width: "100%",
+                  backgroundColor: "rgba(15, 23, 42, 0.6)",
+                  color: "#F8FAFC",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "10px",
+                  padding: "10px",
+                  fontSize: "14px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                value={testDuration}
+                onChange={(e: any) => setTestDuration(parseInt(e.target.value))}
+                disabled={testEnded}
+              >
+                <option value={24} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>24 Hours</option>
+                <option value={48} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>48 Hours</option>
+                <option value={168} style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>7 Days (168 Hours)</option>
+              </select>
+            </View>
+          </View>
+
+          {testType === "ABP" && (
+            <View style={styles.timeInputRow}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Sleep Time</Text>
+                <input
+                  type="time"
+                  style={{
+                    width: "100%",
+                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                    color: "#F8FAFC",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "10px",
+                    padding: "10px",
+                    fontSize: "14px",
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                  editable={!testEnded}
-                />
-                <TextInput
-                  placeholder="What are you feeling?"
-                  style={styles.input}
-                  value={row.symptom}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].symptom = text;
-                    setRows(updatedRows);
-                  }}
-                  editable={!testEnded}
+                  value={sleepTime}
+                  onChange={(e: any) => setSleepTime(e.target.value)}
                 />
               </View>
-              {showComments && (
-                <TextInput
-                  placeholder="Add a comment"
-                  style={styles.commentInput}
-                  value={row.comment}
-                  multiline
-                  scrollEnabled
-                  onChangeText={(text) => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].comment = text;
-                    setRows(updatedRows);
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Wake Time</Text>
+                <input
+                  type="time"
+                  style={{
+                    width: "100%",
+                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                    color: "#F8FAFC",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "10px",
+                    padding: "10px",
+                    fontSize: "14px",
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                  editable={!testEnded}
+                  value={wakeTime}
+                  onChange={(e: any) => setWakeTime(e.target.value)}
                 />
+              </View>
+            </View>
+          )}
+
+          {testStartTime !== "" && (
+            <View style={[styles.statusBadge, testEnded ? styles.statusEnded : styles.statusActive]}>
+              <Text style={styles.statusText}>
+                {testEnded
+                  ? "⚠️ Test Duration Complete (Entry Disabled)"
+                  : `⏳ Active Test ends by: ${calculateTestEndTime(testStartTime)}`}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Activity & Symptom Entry Section */}
+        <View style={styles.glassCard}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardHeaderTitle}>Symptom Log ({testType} Mode)</Text>
+            <TouchableOpacity style={styles.optionsPill} onPress={toggleMenu}>
+              <Text style={styles.optionsPillText}>⚙️ Options</Text>
+            </TouchableOpacity>
+          </View>
+
+          {rows.map((row, index) => (
+            <View key={index} style={styles.entryRowCard}>
+              <View style={styles.inputsRow}>
+                <View style={styles.flexInput}>
+                  <Text style={styles.subLabel}>Activity</Text>
+                  <TextInput
+                    placeholder="e.g. Walking up stairs"
+                    placeholderTextColor="#64748B"
+                    style={styles.textInputArea}
+                    value={row.action}
+                    multiline
+                    onChangeText={(text) => {
+                      const updatedRows = [...rows];
+                      updatedRows[index].action = text;
+                      setRows(updatedRows);
+                    }}
+                    editable={!testEnded}
+                    autoComplete="off"
+                  />
+                </View>
+                <View style={styles.flexInput}>
+                  <Text style={styles.subLabel}>Symptom</Text>
+                  <TextInput
+                    placeholder="e.g. Chest tightness"
+                    placeholderTextColor="#64748B"
+                    style={styles.textInputArea}
+                    value={row.symptom}
+                    multiline
+                    onChangeText={(text) => {
+                      const updatedRows = [...rows];
+                      updatedRows[index].symptom = text;
+                      setRows(updatedRows);
+                    }}
+                    editable={!testEnded}
+                    autoComplete="off"
+                  />
+                </View>
+              </View>
+
+              {showComments && (
+                <View style={{ marginTop: 10 }}>
+                  <Text style={styles.subLabel}>Additional Clinical Comments</Text>
+                  <TextInput
+                    placeholder="Enter any additional observations..."
+                    placeholderTextColor="#64748B"
+                    style={styles.textInputArea}
+                    value={row.comment}
+                    multiline
+                    onChangeText={(text) => {
+                      const updatedRows = [...rows];
+                      updatedRows[index].comment = text;
+                      setRows(updatedRows);
+                    }}
+                    editable={!testEnded}
+                    autoComplete="off"
+                  />
+                </View>
               )}
             </View>
           ))}
+
+          <TouchableOpacity
+            style={[styles.primarySubmitBtn, testEnded && { opacity: 0.5 }]}
+            onPress={saveData}
+            disabled={testEnded}
+          >
+            <Text style={styles.primarySubmitBtnText}>Submit Patient Log Entry</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={styles.fakeSubButton}
-          onPress={saveData}
-          disabled={testEnded}
-        >
-          <Text style={styles.addButtonText}>Submit</Text>
-        </TouchableOpacity>
-
-<TouchableOpacity
-  style={styles.toggleButton}
-  onPress={toggleMenu}
->
-  <Text style={styles.toggleButtonText}>Options</Text>
-</TouchableOpacity>
       </ScrollView>
-      
-{menuVisible && (
-  <View style={styles.menu}>
-<TouchableOpacity
-  style={styles.menuItem}
-  onPress={() => {
-    toggleComments();
-    toggleMenu(); // close the menu after toggling comments
-  }}
->
-  <Text style={styles.menuItemText}>
-    {showComments ? "Hide Comments" : "Add Comments"}
-  </Text>
-</TouchableOpacity>
 
-<TouchableOpacity
-  style={styles.menuItem}
-  onPress={() => {
-    setTestType(testType === "Holter" ? "ABP" : "Holter");
-    toggleMenu(); // close the menu after change
-  }}
->
-  <Text style={styles.menuItemText}>
-    Change to {testType === "Holter" ? "ABP" : "Holter"} Test
-  </Text>
-</TouchableOpacity>
-    <TouchableOpacity style={styles.menuItem} onPress={toggleMenu}>
-      <Text style={styles.menuItemText}>Close Menu</Text>
-    </TouchableOpacity>
-  </View>
-)}
+      {/* Popover Options Menu */}
+      {menuVisible && (
+        <View style={styles.menuOverlay}>
+          <View style={styles.menuCard}>
+            <Text style={styles.menuTitle}>Configuration Menu</Text>
+            <TouchableOpacity style={styles.menuItem} onPress={toggleComments}>
+              <Text style={styles.menuItemText}>
+                {showComments ? "🙈 Hide Comments Field" : "💬 Add Comments Field"}
+              </Text>
+            </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setTestType(testType === "Holter" ? "ABP" : "Holter");
+                setMenuVisible(false);
+              }}
+            >
+              <Text style={styles.menuItemText}>
+                🔄 Switch to {testType === "Holter" ? "ABP" : "Holter"} Mode
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} onPress={() => setMenuVisible(false)}>
+              <Text style={[styles.menuItemText, { color: "#EF4444" }]}>Close Menu</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Password Authorization Modal */}
       {modalVisible && (
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeader}>Enter Password</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Security Authorization</Text>
+            <Text style={styles.modalSubtitle}>Enter passcode to modify test schedule parameters.</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Enter your password"
+              placeholder="Enter Password"
+              placeholderTextColor="#64748B"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoComplete="off"
             />
-            <TouchableOpacity
-              style={styles.modalButton}
-              onPress={handlePasswordSubmit}
-            >
-              <Text style={styles.modalButtonText}>Submit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: 'red' }]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalConfirmBtn} onPress={handlePasswordSubmit}>
+                <Text style={styles.modalBtnText}>Authenticate</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}
@@ -392,218 +452,243 @@ return {
 }
 
 const styles = StyleSheet.create({
-  teStTi: {
-    alignSelf: "center",
-    width: "auto",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    marginBottom: 20,
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#0F172A",
   },
-  inputit: {
-    fontFamily: "Arial, sans-serif",
-    outline: "none",
-    color: "#333",
-    width: "auto",
-    alignSelf: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    padding: 10,
-    boxSizing: "border-box",
+  scrollContent: {
+    padding: 16,
   },
-  headerContainer: {
+  glassCard: {
+    backgroundColor: "rgba(30, 41, 59, 0.7)",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+  },
+  cardHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F8FAFC",
+    marginBottom: 14,
+    letterSpacing: 0.3,
+  },
+  cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    margin: 20,
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  headerRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  timeInputRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
   },
   inputGroup: {
     flex: 1,
-    marginHorizontal: 10,
-    marginBottom: 10,
   },
   label: {
-    fontSize: 16,
-    marginBottom: 5,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#94A3B8",
+    marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  labelTi: {
-    fontSize: 16,
-    marginBottom: 5,
-    alignSelf: "center",
+  subLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#38BDF8",
+    marginBottom: 6,
   },
-  headerInput: {
-    width: "100%",
+  textInput: {
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    color: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
   },
-  scrollContainer: {
+  entryRowCard: {
+    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+  },
+  inputsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  flexInput: {
     flex: 1,
   },
-  tableContainer: {
-    marginLeft: 20,
-    marginRight: 20,
+  textInputArea: {
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    color: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "rgba(255, 255, 255, 0.12)",
     borderRadius: 8,
-    backgroundColor: "#f9f9f9",
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#007AFF",
     padding: 10,
+    fontSize: 14,
+    minHeight: 45,
   },
-  headerText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-    textAlign: "center",
-    flex: 1,
-  },
-  tableRow: {
-    marginBottom: 10,
-  },
-  rowTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-  },
-  input: {
-    width: "48%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
+  statusBadge: {
     padding: 10,
-    backgroundColor: "#fff",
-  },
-  commentInput: {
-    marginHorizontal: 10,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  toggleButton: {
-    backgroundColor: "#FFA500",
-    padding: 10,
-    margin: 15,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: "center",
-    alignSelf: "center",
+    marginTop: 6,
   },
-  toggleButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  statusActive: {
+    backgroundColor: "rgba(14, 165, 233, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(56, 189, 248, 0.3)",
   },
-  fakeSubButton: {
-    backgroundColor: "#00FF7A",
-    paddingTop: 10,
-    paddingBottom: 10,
-    margin: 15,
-    borderRadius: 6,
-    width: "95%",
+  statusEnded: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.3)",
+  },
+  statusText: {
+    color: "#F8FAFC",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  primarySubmitBtn: {
+    backgroundColor: "#0284C7",
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: "center",
-    alignSelf: "center",
+    marginTop: 8,
+    shadowColor: "#0284C7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  addButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  primarySubmitBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
-  menu: {
-    backgroundColor: "#f9f9f9",
-    margin: 15,
-    padding: 10,
-    borderRadius: 6,
+  optionsPill: {
+    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(56, 189, 248, 0.3)",
   },
-  menuItem: {
-    padding: 10,
+  optionsPillText: {
+    color: "#38BDF8",
+    fontWeight: "600",
+    fontSize: 12,
   },
-  menuItemText: {
-    fontSize: 16,
-    color: "#007AFF",
-  },
-  testEndTime: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  testEnded: {
-    color: "red",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  modalContainer: {
+  menuOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContent: {
-    backgroundColor: "white",
+  menuCard: {
+    width: "85%",
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
     padding: 20,
-    borderRadius: 8,
-    width: "80%",
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
-  modalHeader: {
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#F8FAFC",
+    marginBottom: 14,
+  },
+  menuItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+  },
+  menuItemText: {
+    color: "#38BDF8",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontWeight: "700",
+    color: "#F8FAFC",
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginBottom: 16,
   },
   modalInput: {
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    color: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#ccc",
-    width: "100%",
-    padding: 10,
-    marginBottom: 20,
-    borderRadius: 5,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    marginBottom: 18,
   },
-  modalButton: {
-    backgroundColor: "#00FF7A",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    margin: 10,
+  modalBtnRow: {
+    flexDirection: "row",
+    gap: 12,
   },
-  modalButtonText: {
-    color: "white",
-    fontSize: 16,
+  modalCancelBtn: {
+    flex: 1,
+    backgroundColor: "#334155",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
   },
-timeInputRow: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  marginHorizontal: 20,
-  marginBottom: 20,
-},
-timeInputContainer: {
-  flex: 1,
-  marginHorizontal: 5,
-},
-    tetTi: {
-    alignSelf: "center",
-    width: "auto",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    backgroundColor: "#fff",
-    marginBottom: 20,
-    padding: 10,
+  modalConfirmBtn: {
+    flex: 1,
+    backgroundColor: "#0284C7",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
