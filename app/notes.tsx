@@ -28,29 +28,25 @@ export default function SearchPatientNotes() {
   const [selectedTestActivity, setSelectedTestActivity] = useState<any>(null);
 
   const formatTimestamp = (timestamp: string) => {
-  const date = new Date(timestamp.replace(" ", "T"));
+    const date = new Date(timestamp.replace(" ", "T"));
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return `${month}/${day}/${year} ${time}`;
+  };
 
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const year = date.getFullYear();
-
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${month}/${day}/${year} ${time}`;
-};
-
-  
   const calculateDurationHours = (startTimeStr: string, endTimeStr: string): number => {
     try {
       const start = new Date(startTimeStr.replace(" ", "T"));
       const end = new Date(endTimeStr.replace(" ", "T"));
       return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60));
     } catch (e) {
-      return 24; // Default fallback
+      return 24;
     }
   };
 
@@ -63,7 +59,7 @@ export default function SearchPatientNotes() {
     }
   };
 
-  const handleSearch = async () => {
+  const fetchPatientsData = async (query = "") => {
     setLoading(true);
     try {
       const snapshot = await get(ref(database, "entries/"));
@@ -74,69 +70,68 @@ export default function SearchPatientNotes() {
       }
 
       const results = Object.keys(data).filter((patientKey) =>
-        patientKey.toLowerCase().includes(searchQuery.toLowerCase())
+        patientKey.toLowerCase().includes(query.toLowerCase())
       );
 
       const resultPatients = results.map((patientKey) => {
         const patientData = data[patientKey];
-        
-const groupedEntries = Object.keys(patientData)
-  .filter(key => key !== "TestDetails" && key !== "key")
-  .flatMap(timestamp => {
-    const entry = patientData[timestamp]?.["0"];
-    if (!entry) return [];
-    
-    const groupKey = `${entry.TestStartTime}-${entry.TestEndTime}-${entry.SleepTime}-${entry.WakeTime}-${entry.TestType}`;
 
-    return {
-      timestamp,
-      groupKey, // Unique key for grouping
-      ...entry,
-      calculatedDuration: calculateDurationHours(entry.TestStartTime, entry.TestEndTime)
-    };
-  })
-.reduce((groups: any, entry) => {
-  const startTime = entry.TestStartTime;
-  if (!groups[startTime]) {
-    groups[startTime] = {
-      entries: [],
-      testDuration: entry.calculatedDuration || 24,
-      sleepTime: null,
-      wakeTime: null,
-    };
-  }
+        const groupedEntries = Object.keys(patientData)
+          .filter((key) => key !== "TestDetails" && key !== "key")
+          .flatMap((timestamp) => {
+            const entry = patientData[timestamp]?.["0"];
+            if (!entry) return [];
 
-  groups[startTime].entries.push(entry);
+            return {
+              timestamp,
+              ...entry,
+              calculatedDuration: calculateDurationHours(
+                entry.TestStartTime,
+                entry.TestEndTime
+              ),
+            };
+          })
+          .reduce((groups: any, entry) => {
+            const startTime = entry.TestStartTime;
+            if (!groups[startTime]) {
+              groups[startTime] = {
+                entries: [],
+                testDuration: entry.calculatedDuration || 24,
+                sleepTime: null,
+                wakeTime: null,
+              };
+            }
 
-  // Always override with most recent non-empty Sleep/Wake time
-  if (entry.SleepTime && entry.SleepTime.trim()) {
-    groups[startTime].sleepTime = entry.SleepTime;
-  }
+            groups[startTime].entries.push(entry);
 
-  if (entry.WakeTime && entry.WakeTime.trim()) {
-    groups[startTime].wakeTime = entry.WakeTime;
-  }
+            if (entry.SleepTime && entry.SleepTime.trim()) {
+              groups[startTime].sleepTime = entry.SleepTime;
+            }
+            if (entry.WakeTime && entry.WakeTime.trim()) {
+              groups[startTime].wakeTime = entry.WakeTime;
+            }
 
-  return groups;
-}, {});
+            return groups;
+          }, {});
 
-
-
-const sections = Object.keys(groupedEntries).map((startTime) => ({
-  title: startTime,
-  data: groupedEntries[startTime].entries,
-  testDuration: groupedEntries[startTime].testDuration,
-  sleepTime: groupedEntries[startTime].sleepTime,
-  wakeTime: groupedEntries[startTime].wakeTime,
-}));
-
-
-
+        const sections = Object.keys(groupedEntries).map((startTime) => ({
+          title: startTime,
+          data: groupedEntries[startTime].entries,
+          testDuration: groupedEntries[startTime].testDuration,
+          sleepTime: groupedEntries[startTime].sleepTime,
+          wakeTime: groupedEntries[startTime].wakeTime,
+        }));
 
         return {
           key: patientKey,
           sections,
         };
+      });
+
+      resultPatients.sort((a, b) => {
+        const aLastTest = new Date(a.sections[0]?.title.replace(" ", "T") || 0).getTime();
+        const bLastTest = new Date(b.sections[0]?.title.replace(" ", "T") || 0).getTime();
+        return bLastTest - aLastTest;
       });
 
       setPatients(resultPatients);
@@ -147,100 +142,15 @@ const sections = Object.keys(groupedEntries).map((startTime) => ({
     }
   };
 
-  const handleChange = (text: string) => {
-    setSearchQuery(text);
-  };
+  useEffect(() => {
+    if (authenticated) {
+      fetchPatientsData();
+    }
+  }, [authenticated]);
 
   const togglePatientDetails = (patientKey: string) => {
     setExpandedPatient((prev) => (prev === patientKey ? null : patientKey));
   };
-
-  useEffect(() => {
-    const fetchPatients = async () => {
-      setLoading(true);
-      try {
-        const snapshot = await get(ref(database, "entries/"));
-        const data = snapshot.val();
-        if (!data) {
-          setPatients([]);
-          return;
-        }
-
-        const allPatients = Object.keys(data).map((patientKey) => {
-          const patientData = data[patientKey];
-          
-          const groupedEntries = Object.keys(patientData)
-            .filter(key => key !== "TestDetails" && key !== "key")
-            .flatMap(timestamp => {
-              const entry = patientData[timestamp]?.["0"];
-              if (!entry) return [];
-              
-              return {
-                timestamp,
-                ...entry,
-                calculatedDuration: calculateDurationHours(
-                  entry.TestStartTime, 
-                  entry.TestEndTime
-                )
-              };
-            })
-.reduce((groups: any, entry) => {
-  const startTime = entry.TestStartTime;
-  if (!groups[startTime]) {
-    groups[startTime] = {
-      entries: [],
-      testDuration: entry.calculatedDuration || 24,
-      sleepTime: null,
-      wakeTime: null,
-    };
-  }
-
-  groups[startTime].entries.push(entry);
-
-  // Use latest non-empty Sleep/Wake time
-  if (entry.SleepTime && entry.SleepTime.trim()) {
-    groups[startTime].sleepTime = entry.SleepTime;
-  }
-
-  if (entry.WakeTime && entry.WakeTime.trim()) {
-    groups[startTime].wakeTime = entry.WakeTime;
-  }
-
-  return groups;
-}, {});
-
-
-const sections = Object.keys(groupedEntries).map((startTime) => ({
-  title: startTime,
-  data: groupedEntries[startTime].entries,
-  testDuration: groupedEntries[startTime].testDuration,
-  sleepTime: groupedEntries[startTime].sleepTime,
-  wakeTime: groupedEntries[startTime].wakeTime,
-}));
-
-
-          return {
-            key: patientKey,
-            sections,
-          };
-        });
-
-        // Sort the patients by the most recent test start time
-        allPatients.sort((a, b) => {
-          const aLastTest = new Date(a.sections[0]?.title.replace(" ", "T")).getTime();
-          const bLastTest = new Date(b.sections[0]?.title.replace(" ", "T")).getTime();
-          return bLastTest - aLastTest; // Sort descending (most recent first)
-        });
-
-        setPatients(allPatients);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPatients();
-  }, []);
 
   const confirmDeletePatient = (patientKey: string) => {
     setSelectedPatientKey(patientKey);
@@ -255,7 +165,6 @@ const sections = Object.keys(groupedEntries).map((startTime) => ({
       setPatients((prev) => prev.filter((p) => p.key !== patientKey));
     } catch (error) {
       Alert.alert("Error", "Failed to delete patient.");
-      console.error("Error deleting patient:", error);
     }
   };
 
@@ -268,162 +177,158 @@ const sections = Object.keys(groupedEntries).map((startTime) => ({
 
   const deleteTestEntry = async (timestamp: string) => {
     if (!expandedPatient) return;
-    
+
     try {
       await remove(ref(database, `entries/${expandedPatient}/${timestamp}`));
       Alert.alert("Success", "Test entry deleted successfully.");
       setPatients((prevPatients) =>
-        prevPatients.map((patient) =>
-          patient.key === expandedPatient
-            ? {
-                ...patient,
-                sections: patient.sections.map((section) => ({
-                  ...section,
-                  data: section.data.filter((entry) => entry.timestamp !== timestamp),
-                })).filter((section) => section.data.length > 0),
-              }
-            : patient
-        ).filter((patient) => patient.sections.length > 0)
+        prevPatients
+          .map((patient) =>
+            patient.key === expandedPatient
+              ? {
+                  ...patient,
+                  sections: patient.sections
+                    .map((section) => ({
+                      ...section,
+                      data: section.data.filter((entry: any) => entry.timestamp !== timestamp),
+                    }))
+                    .filter((section) => section.data.length > 0),
+                }
+              : patient
+          )
+          .filter((patient) => patient.sections.length > 0)
       );
     } catch (error) {
       Alert.alert("Error", "Failed to delete test entry.");
-      console.error("Error deleting test entry:", error);
     }
   };
 
   if (!authenticated) {
     return (
       <View style={styles.authContainer}>
-        <Text style={styles.authText}>Enter Password to Access Notes</Text>
-        <TextInput
-          style={styles.authInput}
-          secureTextEntry
-          placeholder="Enter Password"
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity style={styles.authButton} onPress={handlePasswordSubmit}>
-          <Text style={styles.authButtonText}>Submit</Text>
-        </TouchableOpacity>
+        <View style={styles.authGlassCard}>
+          <Text style={styles.authHeaderTitle}>🔒 Security Access Required</Text>
+          <Text style={styles.authSubText}>Enter password to query patient notes database.</Text>
+          <TextInput
+            style={styles.textInput}
+            secureTextEntry
+            placeholder="Enter Passcode"
+            placeholderTextColor="#64748B"
+            value={password}
+            onChangeText={setPassword}
+            autoComplete="off"
+          />
+          <TouchableOpacity style={styles.primaryBtn} onPress={handlePasswordSubmit}>
+            <Text style={styles.primaryBtnText}>Authenticate</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+      {/* Search Header Bar */}
+      <View style={styles.searchRow}>
         <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Search by patient name or hospital no"
+          style={[styles.textInput, { flex: 1 }]}
+          placeholder="Search by patient name or hospital ID..."
+          placeholderTextColor="#64748B"
           value={searchQuery}
-          onChangeText={handleChange}
-          onSubmitEditing={handleSearch}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={() => fetchPatientsData(searchQuery)}
+          autoComplete="off"
         />
-        <TouchableOpacity
-          style={{
-            marginLeft: 10,
-            backgroundColor: "blue",
-            padding: 10,
-            borderRadius: 6,
-          }}
-          onPress={handleSearch}
-        >
-          <Text style={{ color: "white", fontWeight: "bold" }}>🔍</Text>
+        <TouchableOpacity style={styles.searchBtn} onPress={() => fetchPatientsData(searchQuery)}>
+          <Text style={styles.searchBtnText}>🔍</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="#38BDF8" />
+        </View>
       ) : (
         <FlatList
           data={patients}
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
-            <View style={styles.patientContainer}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <TouchableOpacity onPress={() => togglePatientDetails(item.key)}>
-                  <Text style={styles.patientName}>{item.key}</Text>
+            <View style={styles.patientCard}>
+              <View style={styles.patientCardHeader}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={() => togglePatientDetails(item.key)}>
+                  <Text style={styles.patientNameText}>{item.key}</Text>
+                  <Text style={styles.recordCountText}>
+                    {expandedPatient === item.key ? "Tap to collapse" : "Tap to expand patient records"}
+                  </Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: "red",
-                    padding: 6,
-                    borderRadius: 6,
-                  }}
-                  onPress={() => confirmDeletePatient(item.key)}
-                >
-                  <Text style={{ color: "white", fontWeight: "bold" }}>🗑️</Text>
+                <TouchableOpacity style={styles.deleteIconButton} onPress={() => confirmDeletePatient(item.key)}>
+                  <Text style={{ fontSize: 16 }}>🗑️</Text>
                 </TouchableOpacity>
               </View>
 
               {expandedPatient === item.key && (
-                <View style={{ width: "100%" }}>
+                <View style={{ marginTop: 12 }}>
                   <SectionList
                     sections={item.sections}
                     keyExtractor={(item, index) => item.timestamp + index}
-renderSectionHeader={({ section }) => {
-  const startTime = new Date(section.title.replace(" ", "T"));
-  const endTime = new Date(startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000);
+                    renderSectionHeader={({ section }) => {
+                      const startTime = new Date(section.title.replace(" ", "T"));
+                      const endTime = new Date(
+                        startTime.getTime() + (section.testDuration || 24) * 60 * 60 * 1000
+                      );
+                      const hasEnded = new Date() > endTime;
 
-  const hasEnded = new Date() > endTime;
+                      const testType = section.data?.[0]?.TestType || "Holter";
 
-const formatDate = (date: Date) => {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const year = date.getFullYear();
+                      return (
+                        <View style={styles.sectionHeaderCard}>
+                          <View style={styles.sectionBadgeRow}>
+                            <Text style={styles.testTypeBadge}>{testType} Test</Text>
+                            <Text
+                              style={[
+                                styles.statusBadgeText,
+                                hasEnded ? styles.statusCompleted : styles.statusOngoing,
+                              ]}
+                            >
+                              {hasEnded ? "Completed" : "Ongoing"}
+                            </Text>
+                          </View>
 
-  const time = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${month}/${day}/${year} ${time}`;
-};
-  
-  const testType = section.data?.[0]?.TestType || "Holter"; // Ensure the data structure is correct
-
-  return (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>Test Start: {formatDate(startTime)}</Text>
-      <Text style={styles.sectionHeaderText}>Test End: {formatDate(endTime)}</Text>
-      <Text style={styles.sectionHeaderText}>Type: {testType}</Text>
-      <Text style={styles.sectionHeaderText}>Duration: {section.testDuration || 24} hours</Text>
-{section.sleepTime && (
-  <Text style={styles.sectionHeaderText}>Sleep Time: {section.sleepTime}</Text>
-)}
-{section.wakeTime && (
-  <Text style={styles.sectionHeaderText}>Wake Time: {section.wakeTime}</Text>
-)}
-
-
-      <Text style={[styles.sectionHeaderText, { color: hasEnded ? "red" : "green" }]}>
-        Status: {hasEnded ? "Completed" : "Ongoing"}
-      </Text>
-    </View>
-  );
-}}
+                          <Text style={styles.sectionMetaText}>Start: {formatTimestamp(section.title)}</Text>
+                          <Text style={styles.sectionMetaText}>
+                            Duration: {section.testDuration || 24} Hours
+                          </Text>
+                          {section.sleepTime && (
+                            <Text style={styles.sectionMetaText}>Sleep Window: {section.sleepTime}</Text>
+                          )}
+                          {section.wakeTime && (
+                            <Text style={styles.sectionMetaText}>Wake Window: {section.wakeTime}</Text>
+                          )}
+                        </View>
+                      );
+                    }}
                     renderItem={({ item }) => (
-                      <View style={styles.noteContainer}>
-                        <Text style={styles.noteDate}>{formatTimestamp(item.timestamp)}</Text>
-                        <Text style={styles.note}>Activity: {item.Activity}</Text>
-                        <Text style={styles.note}>Symptom: {item.Symptom}</Text>
+                      <View style={styles.noteEntryCard}>
+                        <Text style={styles.noteTime}>{formatTimestamp(item.timestamp)}</Text>
+                        <Text style={styles.noteText}>
+                          <Text style={styles.noteLabel}>Activity: </Text>
+                          {item.Activity}
+                        </Text>
+                        <Text style={styles.noteText}>
+                          <Text style={styles.noteLabel}>Symptom: </Text>
+                          {item.Symptom}
+                        </Text>
                         {item.Comment && item.Comment.trim() !== "" && (
-                          <Text style={styles.note}>Comments: {item.Comment}</Text>
+                          <Text style={styles.noteText}>
+                            <Text style={styles.noteLabel}>Comment: </Text>
+                            {item.Comment}
+                          </Text>
                         )}
-
-                       <TouchableOpacity
-                          style={{
-                            marginTop: 5,
-                            backgroundColor: "red",
-                            padding: 6,
-                            borderRadius: 6,
-                            alignSelf: "flex-start",
-                          }}
+                        <TouchableOpacity
+                          style={styles.deleteEntryBtn}
                           onPress={() => confirmDeleteTestEntry(item.timestamp, item)}
                         >
-                          <Text style={{ color: "white", fontWeight: "bold" }}>🗑️ Delete Entry</Text>
+                          <Text style={styles.deleteEntryBtnText}>Delete Log</Text>
                         </TouchableOpacity>
                       </View>
                     )}
@@ -435,31 +340,25 @@ const formatDate = (date: Date) => {
         />
       )}
 
+      {/* Delete Confirmation Modal */}
       {modalVisible && (
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalHeader}>
-              {modalType === "patient" ? "Delete Patient?" : "Delete Test Entry?"}
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {modalType === "patient" ? "Delete Patient Record?" : "Delete Log Entry?"}
             </Text>
-
-            <Text style={{ fontSize: 16, marginBottom: 10 }}>
+            <Text style={styles.modalSubtitle}>
               {modalType === "patient"
-                ? "This will delete ALL records for this patient. Continue?"
-                : "Are you sure you want to delete this test entry?"}
+                ? `This will permanently remove all medical data stored for ${selectedPatientKey}.`
+                : "Are you sure you want to delete this specific timestamped log entry?"}
             </Text>
 
-            {modalType === "test" && selectedTestActivity && (
-              <View style={{ width: "100%", marginBottom: 10 }}>
-                <Text style={{ fontWeight: "bold" }}>Details:</Text>
-                <Text>Activity: {selectedTestActivity.Activity}</Text>
-                <Text>Symptom: {selectedTestActivity.Symptom}</Text>
-                <Text>Recorded: {formatTimestamp(selectedTestActivity.timestamp)}</Text>
-              </View>
-            )}
-
-            <View style={styles.modalButtons}>
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
+                style={styles.modalDeleteBtn}
                 onPress={() => {
                   if (modalType === "patient" && selectedPatientKey) {
                     deletePatient(selectedPatientKey);
@@ -469,14 +368,7 @@ const formatDate = (date: Date) => {
                   setModalVisible(false);
                 }}
               >
-                <Text style={styles.modalButtonText}>Delete</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.modalBtnText}>Confirm Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -487,135 +379,232 @@ const formatDate = (date: Date) => {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    padding: 16,
+  },
   authContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#0F172A",
     padding: 20,
-    backgroundColor: "#f8f8f8",
   },
-  authText: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  authInput: {
-    height: 40,
-    width: "80%",
-    borderColor: "gray",
+  authGlassCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "rgba(30, 41, 59, 0.7)",
+    borderRadius: 16,
+    padding: 24,
     borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    fontSize: 16,
-    borderRadius: 6,
-    backgroundColor: "#fff",
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
-  authButton: {
-    backgroundColor: "#007AFF",
-    padding: 10,
-    borderRadius: 6,
-    width: "60%",
+  authHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#F8FAFC",
+    marginBottom: 6,
+  },
+  authSubText: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginBottom: 16,
+  },
+  searchRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  textInput: {
+    backgroundColor: "rgba(30, 41, 59, 0.7)",
+    color: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  searchBtn: {
+    backgroundColor: "#0284C7",
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    justifyContent: "center",
     alignItems: "center",
   },
-  authButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+  searchBtnText: {
     fontSize: 16,
   },
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f8f8f8",
-  },
-  input: {
-    height: 40,
-    borderColor: "gray",
+  patientCard: {
+    backgroundColor: "rgba(30, 41, 59, 0.7)",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    marginBottom: 20,
-    paddingLeft: 10,
-    fontSize: 16,
-    borderRadius: 6,
+    borderColor: "rgba(255, 255, 255, 0.08)",
   },
-  patientContainer: {
-    marginBottom: 20,
+  patientCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  patientNameText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#F8FAFC",
+  },
+  recordCountText: {
+    fontSize: 12,
+    color: "#38BDF8",
+    marginTop: 2,
+  },
+  deleteIconButton: {
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    padding: 8,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
+    borderColor: "rgba(239, 68, 68, 0.3)",
   },
-  patientName: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  noteContainer: {
+  sectionHeaderCard: {
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    padding: 12,
+    borderRadius: 10,
     marginTop: 10,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "rgba(255, 255, 255, 0.05)",
   },
-  noteDate: {
+  sectionBadgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  testTypeBadge: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#38BDF8",
+    textTransform: "uppercase",
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  statusOngoing: {
+    color: "#34D399",
+    backgroundColor: "rgba(52, 211, 153, 0.15)",
+  },
+  statusCompleted: {
+    color: "#F87171",
+    backgroundColor: "rgba(248, 113, 113, 0.15)",
+  },
+  sectionMetaText: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginTop: 2,
+  },
+  noteEntryCard: {
+    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    marginLeft: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#38BDF8",
+  },
+  noteTime: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748B",
+    marginBottom: 4,
+  },
+  noteText: {
     fontSize: 14,
-    color: "#888",
-    marginBottom: 5,
+    color: "#F8FAFC",
+    marginBottom: 4,
   },
-  note: {
-    fontSize: 16,
-    marginBottom: 5,
+  noteLabel: {
+    color: "#94A3B8",
+    fontWeight: "600",
   },
-  sectionHeader: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
+  deleteEntryBtn: {
+    alignSelf: "flex-start",
+    marginTop: 6,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 6,
-    marginTop: 10,
   },
-  sectionHeaderText: {
-    fontSize: 16,
-    marginBottom: 3,
+  deleteEntryBtnText: {
+    color: "#F87171",
+    fontSize: 12,
+    fontWeight: "600",
   },
-  modalContainer: {
+  primaryBtn: {
+    backgroundColor: "#0284C7",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  primaryBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  modalOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.85)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    width: "90%",
-    backgroundColor: "white",
     padding: 20,
-    borderRadius: 10,
   },
-  modalHeader: {
+  modalCard: {
+    width: "100%",
+    maxWidth: 380,
+    backgroundColor: "#1E293B",
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontWeight: "700",
+    color: "#F8FAFC",
+    marginBottom: 6,
   },
-  modalButtons: {
+  modalSubtitle: {
+    fontSize: 13,
+    color: "#94A3B8",
+    marginBottom: 16,
+  },
+  modalBtnRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    gap: 12,
   },
-  modalButton: {
-    padding: 10,
-    borderRadius: 6,
-    alignItems: "center",
+  modalCancelBtn: {
     flex: 1,
+    backgroundColor: "#334155",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
   },
-  deleteButton: {
-    backgroundColor: "red",
-    marginRight: 10,
+  modalDeleteBtn: {
+    flex: 1,
+    backgroundColor: "#DC2626",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
   },
-  cancelButton: {
-    backgroundColor: "gray",
-  },
-  modalButtonText: {
-    color: "white",
-    fontWeight: "bold",
+  modalBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
